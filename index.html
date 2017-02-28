@@ -5,6 +5,10 @@ index.html - The web page document containing the canvas (drawing surface), that
 
 <head>
   <meta charset="UTF-8" />
+
+  <!--our own css-->
+  <link rel="stylesheet" type="text/css" href="css/style.css">
+
   <script type="text/javascript" src="MV.js"></script>
   <!--  Javascript "include" files.  Any code in them gets executed as part of the page loading.  //-->
   <script type="text/javascript" src="tinywebgl-ucla.js"></script>
@@ -44,6 +48,8 @@ index.html - The web page document containing the canvas (drawing surface), that
 </head>
 
 <body>
+  <span id="score-text">Score: </span>
+  <span id="lives-text">Lives: </span>
   <canvas id="gl-canvas" width="1200" height="600"></canvas>
 </body>
 
