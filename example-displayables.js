@@ -177,3 +177,25 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
       }
   }, Animation );
+
+  /* ==============================
+
+  Being writing our own classes here:
+
+  =============================== */
+
+  Declare_Any_Class("Score_Screen",
+    {
+      'construct': function (context) {
+        this.define_data_members({
+          shared_scratchpad: context.shared_scratchpad,
+          score: document.getElementById("score-text"),
+          lives: document.getElementById("lives-text")
+        });
+        this.shared_scratchpad.game_state = {score_amount: 0, lives_amount: 3};
+      },
+      'display': function (time) {
+        this.score.innerHTML = "Score: " + this.shared_scratchpad.game_state.score_amount++;
+        this.lives.innerHTML = "Lives: " + this.shared_scratchpad.game_state.lives_amount;
+      }
+    }, Animation);
