@@ -138,8 +138,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
   { 'construct': function( context )
       { this.shared_scratchpad    = context.shared_scratchpad;
 
-        shapes_in_use.cube        = new Cube(false);
-        shapes_in_use.repeatCube  = new Cube(true);
+        shapes_in_use.cube        = new Cube();
 
 
         //for some reason it won't animate by itself, even when it's set to true in tinywebgl

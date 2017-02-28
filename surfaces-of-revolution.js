@@ -81,12 +81,12 @@ Declare_Any_Class( "Rounded_Capped_Cylinder",   // An alternative without three 
       { Surface_Of_Revolution.prototype.insert_transformed_copy_into( this, [ rows, columns, [ vec3( 0, 0, .5 ), vec3( 1, 0, .5 ), vec3( 1, 0, -.5 ), vec3( 0, 0, -.5 ) ] ] ); } }, Shape ) 
     
 Declare_Any_Class( "Cube",    // A cube inserts six square strips into its lists.
-  { populate: function(repeat)  
+  { populate: function()  
       { for( var i = 0; i < 3; i++ )                    
           for( var j = 0; j < 2; j++ )
           { var square_transform = mult( rotation( i == 0 ? 90 : 0, vec3( 1, 0, 0 ) ), rotation( 180 * j - ( i == 1 ? 90 : 0 ), vec3( 0, 1, 0 ) ) );
                 square_transform = mult( square_transform, translation(0, 0, 1) );
-            Square.prototype.insert_transformed_copy_into( this, [repeat], square_transform );             
+            Square.prototype.insert_transformed_copy_into( this, [], square_transform );             
           } 
       } }, Shape )
   
