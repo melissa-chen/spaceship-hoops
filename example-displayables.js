@@ -66,7 +66,7 @@ var texScrollOffset = 0.0;
 Declare_Any_Class( "Example_Camera",     // An example of a displayable object that our class Canvas_Manager can manage.  Adds both first-person and
   { 'construct': function( context )     // third-person style camera matrix controls to the canvas.
       { // 1st parameter below is our starting camera matrix.  2nd is the projection:  The matrix that determines how depth is treated.  It projects 3D points onto a plane.
-        context.shared_scratchpad.graphics_state = new Graphics_State( translation(0, -4, -10), perspective(50, canvas.width/canvas.height, .1, 1000), 0 );
+        context.shared_scratchpad.graphics_state = new Graphics_State( translation(0, -30, -50), perspective(50, canvas.width/canvas.height, .1, 1000), 0 );
         this.define_data_members( { graphics_state: context.shared_scratchpad.graphics_state, thrust: vec3(), origin: vec3( 0, 5, 0 ), looking: false } );
 
         this.graphics_state.camera_transform = mult( rotation( 20, 1, 0, 0 ), this.graphics_state.camera_transform );
@@ -139,8 +139,15 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
       { this.shared_scratchpad    = context.shared_scratchpad;
 
         shapes_in_use.cube        = new Cube();
+        shapes_in_use.cylindrical_tube = new Cylindrical_Tube(5, 20);
+        shapes_in_use.capped_cylinder = new Capped_Cylinder(5, 20);
+        shapes_in_use.rounded_closed_cone = new Rounded_Closed_Cone(5, 30);
+        shapes_in_use.sphere    = new Subdivision_Sphere( 4 );
+
+        shapes_in_use.polygon = new Regular_2D_Polygon(1, 3);
 
 
+         shapes_in_use.ball = new Sphere( 10, false, 10 );
         //for some reason it won't animate by itself, even when it's set to true in tinywebgl
         this.shared_scratchpad.animate   = true;
       },
@@ -169,15 +176,73 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         graphics_state.lights = [];                    // First clear the light list each frame so we can replace & update lights.
 
         var t = graphics_state.animation_time/1000, light_orbit = [ Math.cos(t), Math.sin(t) ];
-        //graphics_state.lights.push( new Light( vec4( 0,4,0, 1 ), Color( 1, 1, 1, 1 ), 20 ) );
-        //graphics_state.lights.push( new Light( vec4( -10*light_orbit[0], -20*light_orbit[1], -14*light_orbit[0], 0 ), Color( 1, 1, .3, 1 ), 100*Math.cos( t/10 ) ) );
+        graphics_state.lights.push( new Light( vec4( 0, 2 , 3, 1 ), Color( 1, 1, 1, 1 ), 20 ) );
+        // graphics_state.lights.push( new Light( vec4( -10*light_orbit[0], -20*light_orbit[1], -14*light_orbit[0], 0 ), Color( 1, 1, .3, 1 ), 100*Math.cos( t/10 ) ) );
 
         // *** Materials: *** Declare new ones as temps when needed; they're just cheap wrappers for some numbers.
         // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
         // Omit the final (string) parameter if you want no texture
                                                       //ambient, diffuse, specular, specular exponent
+      var purplePlastic = new Material( Color( .9,.5,.9,1 ), .4, .4, .8, 40 ), // Omit the final (string) parameter if you want no texture
+          sun = new Material( Color( 1, .4, .4, 1 ), .8, 0, 0, 40 ),
+          icyGray = new Material( Color(.6, .6, .7, 1), .8, .5, .4, 20 ),
+          darkGray = new Material( Color(.5, .6, .7, 1), .8, .5, .4, 20 );
+        
+        // model_transform = mat4();
+        // // model_transform = mult( model_transform, translation( -1, 0, 0 ) );
+        // sun_loc = model_transform;
+        // model_transform = mult( model_transform, scale(3, 3, 3) );
+        // shapes_in_use.Cylindrical_Tube.draw( graphics_state, model_transform, sun );
+
+        var bodyCenter;
+        var wing;
+        
+        // BODY
+        model_transform = mult(model_transform, translation(3, 0, 0));
+        bodyCenter = model_transform;
+
+        model_transform = mult( model_transform, scale(2.4, 2.4, 14) );
+        shapes_in_use.capped_cylinder.draw( graphics_state, model_transform, darkGray);
+
+        // TIP 
+        model_transform = bodyCenter;
+        model_transform = mult(model_transform, rotation(180, 0, 1, 0));  // place on other side
+        model_transform = mult( model_transform, translation( 0, 0, 9.9 ) );
+        model_transform = mult( model_transform, scale(3, 3, 3) );
+        shapes_in_use.rounded_closed_cone.draw(graphics_state, model_transform, icyGray);
 
 
+        for (var i = 0; i < 2; i++){
+          // WINGS
+          model_transform = bodyCenter;
+          model_transform = mult(model_transform, translation(5.3 * Math.pow(-1, i), 0, 1));
+
+          model_transform = mult( model_transform, mat4(1, 0, 0, 0, 
+                                                        0, 1, 0, 0, 
+                                                        1 * Math.pow(-1, i), 0, 1, 0,
+                                                        0, 0, 0, 1) );
+          model_transform = mult(model_transform, scale(3, .5, 3));                                              
+          shapes_in_use.cube.draw( graphics_state, model_transform, icyGray);
+          
+          // SIDE CYLINDERS
+          model_transform = bodyCenter;
+          model_transform = mult(model_transform, translation(9* Math.pow(-1, i), 0, 3.5));
+          model_transform = mult( model_transform, scale(.8, .8, 9) );
+          shapes_in_use.capped_cylinder.draw( graphics_state, model_transform, darkGray);
+
+          // SIDE TOP SPHERES
+          model_transform = bodyCenter;
+          model_transform = mult(model_transform, translation(9* Math.pow(-1, i), 0, -1));
+          model_transform = mult( model_transform, scale(.8, .8, 1) );
+          shapes_in_use.sphere.draw( graphics_state, model_transform, icyGray);
+      
+        }
+        // BUTT
+        model_transform = bodyCenter;
+        model_transform = mult(model_transform, rotation(180, 0, 1, 0));  // place on other side
+        model_transform = mult( model_transform, translation( 0, 0, -7 ) );
+        model_transform = mult( model_transform, scale(3, 3, 3) );
+        shapes_in_use.rounded_closed_cone.draw(graphics_state, model_transform, icyGray);
 
       }
   }, Animation );
