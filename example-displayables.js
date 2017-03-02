@@ -10,7 +10,7 @@ Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayabl
         shapes_in_use.debug_text = new Text_Line( 35 );
       },
     'init_keys': function( controls )
-      { //controls.add( "t",    this, function() { this.visible ^= 1;                                                                                                             } );
+      { controls.add( "t",    this, function() { this.visible ^= 1;                                                                                                             } );
         controls.add( "up",   this, function() { this.start_index = ( this.start_index + 1 ) % Object.keys( this.string_map ).length;                                           } );
         controls.add( "down", this, function() { this.start_index = ( this.start_index - 1   + Object.keys( this.string_map ).length ) % Object.keys( this.string_map ).length; } );
         this.controls = controls;
@@ -81,15 +81,10 @@ Declare_Any_Class( "Example_Camera",     // An example of a displayable object t
         canvas.addEventListener( "mouseout",  ( function(self) { return function(e) { self.mouse.from_center = vec2(); }; } ) (this), false );    // Stop steering if the mouse leaves the canvas.
       },
     'init_keys': function( controls )   // init_keys():  Define any extra keyboard shortcuts here
-      { 
+      {
         //move camera in and out along z axis
-        controls.add( "i",     this, function() { this.thrust[2] =  1; } );     controls.add( "i",     this, function() { this.thrust[2] =  0; }, {'type':'keyup'} ); 
-        controls.add( "o",     this, function() { this.thrust[2] =  -1; } );     controls.add( "o",     this, function() { this.thrust[2] =  0; }, {'type':'keyup'} ); 
-
-        controls.add( "t",     this, function() { texRotationOffset = this.graphics_state.animation_time - texRotationOffset;
-                                                  textureRotate = !textureRotate; } );
-        controls.add( "s",     this, function() { texScrollOffset =  this.graphics_state.animation_time - texScrollOffset;
-                                                  scroll = !scroll; } );
+        controls.add( "i",     this, function() { this.thrust[2] =  1; } );     controls.add( "i",     this, function() { this.thrust[2] =  0; }, {'type':'keyup'} );
+        controls.add( "o",     this, function() { this.thrust[2] =  -1; } );     controls.add( "o",     this, function() { this.thrust[2] =  0; }, {'type':'keyup'} );
 
         // control system to move the camera angle.  If the camera is attached to a planet, only the heading can be change left/right
         controls.add( "left",  this, function() { if (attached) rotate_mod = mult( rotation( N, 0, -1, 0 ), rotate_mod);
@@ -102,8 +97,8 @@ Declare_Any_Class( "Example_Camera",     // An example of a displayable object t
       },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       { var C_inv = inverse( this.graphics_state.camera_transform ), pos = mult_vec( C_inv, vec4( 0, 0, 0, 1 ) ),
-                                                                  z_axis = mult_vec( C_inv, vec4( 0, 0, 1, 0 ) );                                                                 
-        user_interface_string_manager.string_map["origin" ] = "Center of rotation: " + this.origin[0].toFixed(0) + ", " + this.origin[1].toFixed(0) + ", " + this.origin[2].toFixed(0);                                                       
+                                                                  z_axis = mult_vec( C_inv, vec4( 0, 0, 1, 0 ) );
+        user_interface_string_manager.string_map["origin" ] = "Center of rotation: " + this.origin[0].toFixed(0) + ", " + this.origin[1].toFixed(0) + ", " + this.origin[2].toFixed(0);
         user_interface_string_manager.string_map["cam_pos"] = "Cam Position: " + pos[0].toFixed(2) + ", " + pos[1].toFixed(2) + ", " + pos[2].toFixed(2);    // The below is affected by left hand rule:
         user_interface_string_manager.string_map["facing" ] = "Facing: "       + ( ( z_axis[0] > 0 ? "West " : "East ") + ( z_axis[1] > 0 ? "Down " : "Up " ) + ( z_axis[2] > 0 ? "North" : "South" ) );
       },
@@ -138,16 +133,12 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
   { 'construct': function( context )
       { this.shared_scratchpad    = context.shared_scratchpad;
 
-        shapes_in_use.cube        = new Cube();
         shapes_in_use.cylindrical_tube = new Cylindrical_Tube(5, 20);
         shapes_in_use.capped_cylinder = new Capped_Cylinder(5, 20);
         shapes_in_use.rounded_closed_cone = new Rounded_Closed_Cone(5, 30);
         shapes_in_use.sphere    = new Subdivision_Sphere( 4 );
 
-        shapes_in_use.polygon = new Regular_2D_Polygon(1, 3);
 
-
-         shapes_in_use.ball = new Sphere( 10, false, 10 );
         //for some reason it won't animate by itself, even when it's set to true in tinywebgl
         this.shared_scratchpad.animate   = true;
       },
@@ -183,11 +174,11 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
         // Omit the final (string) parameter if you want no texture
                                                       //ambient, diffuse, specular, specular exponent
+
       var purplePlastic = new Material( Color( .9,.5,.9,1 ), .4, .4, .8, 40 ), // Omit the final (string) parameter if you want no texture
-          sun = new Material( Color( 1, .4, .4, 1 ), .8, 0, 0, 40 ),
           icyGray = new Material( Color(.6, .6, .7, 1), .8, .5, .4, 20 ),
           darkGray = new Material( Color(.5, .6, .7, 1), .8, .5, .4, 20 );
-        
+
         // model_transform = mat4();
         // // model_transform = mult( model_transform, translation( -1, 0, 0 ) );
         // sun_loc = model_transform;
@@ -196,7 +187,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
         var bodyCenter;
         var wing;
-        
+
         // BODY
         model_transform = mult(model_transform, translation(3, 0, 0));
         bodyCenter = model_transform;
@@ -204,7 +195,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         model_transform = mult( model_transform, scale(2.4, 2.4, 14) );
         shapes_in_use.capped_cylinder.draw( graphics_state, model_transform, darkGray);
 
-        // TIP 
+        // TIP
         model_transform = bodyCenter;
         model_transform = mult(model_transform, rotation(180, 0, 1, 0));  // place on other side
         model_transform = mult( model_transform, translation( 0, 0, 9.9 ) );
@@ -217,13 +208,13 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           model_transform = bodyCenter;
           model_transform = mult(model_transform, translation(5.3 * Math.pow(-1, i), 0, 1));
 
-          model_transform = mult( model_transform, mat4(1, 0, 0, 0, 
-                                                        0, 1, 0, 0, 
+          model_transform = mult( model_transform, mat4(1, 0, 0, 0,
+                                                        0, 1, 0, 0,
                                                         1 * Math.pow(-1, i), 0, 1, 0,
                                                         0, 0, 0, 1) );
-          model_transform = mult(model_transform, scale(3, .5, 3));                                              
+          model_transform = mult(model_transform, scale(3, .5, 3));
           shapes_in_use.cube.draw( graphics_state, model_transform, icyGray);
-          
+
           // SIDE CYLINDERS
           model_transform = bodyCenter;
           model_transform = mult(model_transform, translation(9* Math.pow(-1, i), 0, 3.5));
@@ -235,7 +226,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           model_transform = mult(model_transform, translation(9* Math.pow(-1, i), 0, -1));
           model_transform = mult( model_transform, scale(.8, .8, 1) );
           shapes_in_use.sphere.draw( graphics_state, model_transform, icyGray);
-      
+
         }
         // BUTT
         model_transform = bodyCenter;
@@ -246,3 +237,25 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
       }
   }, Animation );
+
+  /* ==============================
+
+  Begin writing our own classes here:
+
+  =============================== */
+
+  Declare_Any_Class("Score_Screen",
+    {
+      'construct': function (context) {
+        this.define_data_members({
+          shared_scratchpad: context.shared_scratchpad,
+          score: document.getElementById("score-text"),
+          lives: document.getElementById("lives-text")
+        });
+        this.shared_scratchpad.game_state = {score_amount: 0, lives_amount: 3};
+      },
+      'display': function (time) {
+        this.score.innerHTML = "Score: " + this.shared_scratchpad.game_state.score_amount++;
+        this.lives.innerHTML = "Lives: " + this.shared_scratchpad.game_state.lives_amount;
+      }
+    }, Animation);
