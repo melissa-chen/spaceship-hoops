@@ -133,6 +133,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
   { 'construct': function( context )
       { this.shared_scratchpad    = context.shared_scratchpad;
 
+        shapes_in_use.cube = new Cube();
         shapes_in_use.cylindrical_tube = new Cylindrical_Tube(5, 20);
         shapes_in_use.capped_cylinder = new Capped_Cylinder(5, 20);
         shapes_in_use.rounded_closed_cone = new Rounded_Closed_Cone(5, 30);
