@@ -4,6 +4,10 @@
 
 // Now go down to Example_Animation's display() function to see where the sample shapes you see drawn are coded, and a good place to begin filling in your own code.
 
+
+var posOffset = [];
+var gameObjects = [];
+
 Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayable object that our class Canvas_Manager can manage.  Displays a text user interface.
   { 'construct': function( context )
       { this.define_data_members( { string_map: context.shared_scratchpad.string_map, start_index: 0, tick: 0, visible: false, graphicsState: new Graphics_State() } );
@@ -48,28 +52,22 @@ Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayabl
       }
   }, Animation );
 
-var N = 1;
-var attached = false;
-var camera_state;
-var rotate_mod = mat4();
-var rotate = true;
-var textureRotate = true;
-var scroll = true;
-var saveTexRotateState = mat4();
-var saveTexScrollState;
-var saveRotateState1 = mat4();
-var saveRotateState2 = mat4();
-var rotationOffset = 0.0;
-var texRotationOffset = 0.0;
-var texScrollOffset = 0.0;
-
 Declare_Any_Class( "Example_Camera",     // An example of a displayable object that our class Canvas_Manager can manage.  Adds both first-person and
   { 'construct': function( context )     // third-person style camera matrix controls to the canvas.
       { // 1st parameter below is our starting camera matrix.  2nd is the projection:  The matrix that determines how depth is treated.  It projects 3D points onto a plane.
-        context.shared_scratchpad.graphics_state = new Graphics_State( translation(0, -4, -10), perspective(50, canvas.width/canvas.height, .1, 1000), 0 );
+        context.shared_scratchpad.graphics_state = new Graphics_State( translation(0, -4, 0), perspective(50, canvas.width/canvas.height, .1, 1000), 0 );
         this.define_data_members( { graphics_state: context.shared_scratchpad.graphics_state, thrust: vec3(), origin: vec3( 0, 5, 0 ), looking: false } );
 
         this.graphics_state.camera_transform = mult( rotation( 20, 1, 0, 0 ), this.graphics_state.camera_transform );
+
+        //gameobject:(shape, material, animationtime, startpos)
+
+        gameObjects.push([shapes_in_use.cube, new Material( Color( 1,1,0,1 ), .4, .8, .9, 50 ), this.graphics_state.animation_time,
+          vec3( 0, 1, -50)]);
+
+        gameObjects.push([shapes_in_use.cube, new Material( Color( 1,0,1,1 ), .4, .8, .9, 50 ), this.graphics_state.animation_time,
+          vec3( 0, 1, -20)]);
+          //translation( 0, 1, -20 + (this.graphics_state.animation_time - posOffset[1])/100.0 )]);
 
 
         // *** Mouse controls: ***
@@ -157,12 +155,17 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         user_interface_string_manager.string_map["time"]    = "Animation Time: " + Math.round( this.shared_scratchpad.graphics_state.animation_time )/1000 + "s";
         user_interface_string_manager.string_map["animate"] = "Animation " + (this.shared_scratchpad.animate ? "on" : "off") ;
       },
+
     'display': function(time)
       {
         //this.shared_scratchpad.graphics_state.camera_transform = mult( rotation( 8, -1, 0, 0 ), this.shared_scratchpad.graphics_state.camera_transform );
         var graphics_state  = this.shared_scratchpad.graphics_state,
             model_transform = mat4();             // We have to reset model_transform every frame, so that as each begins, our basis starts as the identity.
         shaders_in_use[ "Default" ].activate();
+
+        function add_object_to_scene(obj){
+
+        }
 
         // *** Lights: *** Values of vector or point lights over time.  Arguments to construct a Light(): position or vector (homogeneous coordinates), color, size
         // If you want more than two lights, you're going to need to increase a number in the vertex shader file (index.html).  For some reason this won't work in Firefox.
@@ -176,6 +179,31 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
         // Omit the final (string) parameter if you want no texture
                                                       //ambient, diffuse, specular, specular exponent
+
+     
+
+        var cube1 = new Material( Color( 1,1,0,1 ), .4, .8, .9, 50 ),
+            cube2 = new Material( Color( 1,0,1,1 ), .4, .8, .9, 50 );
+
+        var shape, material, offset, pos;
+
+        //gameobject:(shape, material, animationtime, startpos)
+        for(var i =0; i < gameObjects.length; i++){
+          shape = gameObjects[i][0];
+          material = gameObjects[i][1];
+          offset = gameObjects[i][2];
+          pos = gameObjects[i][3];
+          zpos = pos[2] + (graphics_state.animation_time - offset)/60.0;
+          if (zpos > 0){
+            gameObjects.splice(i, 1);
+            continue;
+          }
+          model_transform = mat4();
+          model_transform = mult(translation(pos[0], pos[1], zpos) , model_transform );
+          shape.draw( graphics_state, model_transform, material);
+        }
+
+
 
 
 
