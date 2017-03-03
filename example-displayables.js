@@ -14,7 +14,7 @@ Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayabl
         shapes_in_use.debug_text = new Text_Line( 35 );
       },
     'init_keys': function( controls )
-      { //controls.add( "t",    this, function() { this.visible ^= 1;                                                                                                             } );
+      { controls.add( "t",    this, function() { this.visible ^= 1;                                                                                                             } );
         controls.add( "up",   this, function() { this.start_index = ( this.start_index + 1 ) % Object.keys( this.string_map ).length;                                           } );
         controls.add( "down", this, function() { this.start_index = ( this.start_index - 1   + Object.keys( this.string_map ).length ) % Object.keys( this.string_map ).length; } );
         this.controls = controls;
@@ -53,7 +53,7 @@ Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayabl
   }, Animation );
 
 Declare_Any_Class( "Example_Camera",     // An example of a displayable object that our class Canvas_Manager can manage.  Adds both first-person and
-  { 'construct': function( context )     // third-person style camera matrix controls to the canvas.
+  { 'construct': function( context )     // third-person style camera matrix controls to the canvas
       { // 1st parameter below is our starting camera matrix.  2nd is the projection:  The matrix that determines how depth is treated.  It projects 3D points onto a plane.
         context.shared_scratchpad.graphics_state = new Graphics_State( translation(0, -4, 0), perspective(50, canvas.width/canvas.height, .1, 1000), 0 );
         this.define_data_members( { graphics_state: context.shared_scratchpad.graphics_state, thrust: vec3(), origin: vec3( 0, 5, 0 ), looking: false } );
@@ -83,11 +83,6 @@ Declare_Any_Class( "Example_Camera",     // An example of a displayable object t
         //move camera in and out along z axis
         controls.add( "i",     this, function() { this.thrust[2] =  1; } );     controls.add( "i",     this, function() { this.thrust[2] =  0; }, {'type':'keyup'} ); 
         controls.add( "o",     this, function() { this.thrust[2] =  -1; } );     controls.add( "o",     this, function() { this.thrust[2] =  0; }, {'type':'keyup'} ); 
-
-        controls.add( "t",     this, function() { texRotationOffset = this.graphics_state.animation_time - texRotationOffset;
-                                                  textureRotate = !textureRotate; } );
-        controls.add( "s",     this, function() { texScrollOffset =  this.graphics_state.animation_time - texScrollOffset;
-                                                  scroll = !scroll; } );
 
         // control system to move the camera angle.  If the camera is attached to a planet, only the heading can be change left/right
         controls.add( "left",  this, function() { if (attached) rotate_mod = mult( rotation( N, 0, -1, 0 ), rotate_mod);
@@ -179,8 +174,9 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
         // Omit the final (string) parameter if you want no texture
                                                       //ambient, diffuse, specular, specular exponent
+        var purplePlastic = new Material( Color( .9,.5,.9,1 ), .4, .4, .8, 40 );
 
-     
+        shapes_in_use.cube .draw( graphics_state, mat4(), purplePlastic );
 
         var cube1 = new Material( Color( 1,1,0,1 ), .4, .8, .9, 50 ),
             cube2 = new Material( Color( 1,0,1,1 ), .4, .8, .9, 50 );
@@ -203,9 +199,27 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           shape.draw( graphics_state, model_transform, material);
         }
 
-
-
-
-
       }
   }, Animation );
+
+  /* ==============================
+
+  Being writing our own classes here:
+
+  =============================== */
+
+  Declare_Any_Class("Score_Screen",
+    {
+      'construct': function (context) {
+        this.define_data_members({
+          shared_scratchpad: context.shared_scratchpad,
+          score: document.getElementById("score-text"),
+          lives: document.getElementById("lives-text")
+        });
+        this.shared_scratchpad.game_state = {score_amount: 0, lives_amount: 3};
+      },
+      'display': function (time) {
+        this.score.innerHTML = "Score: " + this.shared_scratchpad.game_state.score_amount++;
+        this.lives.innerHTML = "Lives: " + this.shared_scratchpad.game_state.lives_amount;
+      }
+    }, Animation);
