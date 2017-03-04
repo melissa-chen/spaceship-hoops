@@ -57,6 +57,7 @@ Declare_Any_Class( "Example_Camera",     // An example of a displayable object t
       { // 1st parameter below is our starting camera matrix.  2nd is the projection:  The matrix that determines how depth is treated.  It projects 3D points onto a plane.
 
         context.shared_scratchpad.graphics_state = new Graphics_State( translation(0, -20, -30), perspective(50, canvas.width/canvas.height, .1, 1000), 0 );
+
         this.define_data_members( { graphics_state: context.shared_scratchpad.graphics_state, thrust: vec3(), origin: vec3( 0, 5, 0 ), looking: false } );
 
         this.graphics_state.camera_transform = mult( rotation( 20, 1, 0, 0 ), this.graphics_state.camera_transform );
@@ -69,6 +70,16 @@ Declare_Any_Class( "Example_Camera",     // An example of a displayable object t
         gameObjects.push([shapes_in_use.cube, new Material( Color( 1,0,1,1 ), .4, .8, .9, 50 ), this.graphics_state.animation_time,
           vec3( 0, 1, -20)]);
           //translation( 0, 1, -20 + (this.graphics_state.animation_time - posOffset[1])/100.0 )]);
+
+        var randx = getRandomNumber(-10, 100);
+        var randy = getRandomNumber(-100, 5)
+        gameObjects.push([shapes_in_use.ring, new Material( Color( 1,0,0,1 ), .4, .8, .9, 50 ), this.graphics_state.animation_time,
+          vec3( randx, randy, -50)]);
+
+        randx = getRandomNumber(-10, 100);
+        randy = getRandomNumber(-100, 5)
+        gameObjects.push([shapes_in_use.asteroid, new Material( Color( 0,0,1,1 ), .4, .8, .9, 50 ), this.graphics_state.animation_time,
+          vec3( randx, randy, -50)]);
 
 
         // *** Mouse controls: ***
@@ -131,12 +142,16 @@ Declare_Any_Class( "Example_Camera",     // An example of a displayable object t
 Declare_Any_Class( "Example_Animation",  // An example of a displayable object that our class Canvas_Manager can manage.  This one draws the scene's 3D shapes.
   { 'construct': function( context )
       { this.shared_scratchpad    = context.shared_scratchpad;
-        // Spaceship shapes
-        shapes_in_use.cube = new Cube();
+        shapes_in_use.cube        = new Cube();
+        shapes_in_use.ring        = new Torus(20, 20);
+        shapes_in_use.asteroid    = new Sphere(7, 7);
+
+
         shapes_in_use.cylindrical_tube = new Cylindrical_Tube(5, 20);
         shapes_in_use.capped_cylinder = new Capped_Cylinder(5, 20);
         shapes_in_use.rounded_closed_cone = new Rounded_Closed_Cone(5, 30);
         shapes_in_use.sphere    = new Subdivision_Sphere( 4 );
+
 
         //for some reason it won't animate by itself, even when it's set to true in tinywebgl
         this.shared_scratchpad.animate   = true;
@@ -233,12 +248,13 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         var prescale = .5;  // control spaceship size
         this.spaceship(model_transform, graphics_state, prescale);  // specify position, etc with model_transform
 
+
         var cube1 = new Material( Color( 1,1,0,1 ), .4, .8, .9, 50 ),
             cube2 = new Material( Color( 1,0,1,1 ), .4, .8, .9, 50 );
 
         var shape, material, offset, pos;
 
-        //gameobject:(shape, material, animationtime, startpos)
+        // gameobject:(shape, material, animationtime, startpos)
         for(var i =0; i < gameObjects.length; i++){
           shape = gameObjects[i][0];
           material = gameObjects[i][1];
@@ -278,3 +294,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         this.lives.innerHTML = "Lives: " + this.shared_scratchpad.game_state.lives_amount;
       }
     }, Animation);
+
+    function getRandomNumber(min, max) {
+      return Math.random() * (max - min) + min;
+    }
