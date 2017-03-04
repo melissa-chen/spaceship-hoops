@@ -55,7 +55,7 @@ Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayabl
 Declare_Any_Class( "Example_Camera",     // An example of a displayable object that our class Canvas_Manager can manage.  Adds both first-person and
   { 'construct': function( context )     // third-person style camera matrix controls to the canvas
       { // 1st parameter below is our starting camera matrix.  2nd is the projection:  The matrix that determines how depth is treated.  It projects 3D points onto a plane.
-        context.shared_scratchpad.graphics_state = new Graphics_State( translation(0, -4, 0), perspective(50, canvas.width/canvas.height, .1, 1000), 0 );
+        context.shared_scratchpad.graphics_state = new Graphics_State( translation(0, 0,-60), perspective(-50, canvas.width/canvas.height, .1, 1000), 0 );
         this.define_data_members( { graphics_state: context.shared_scratchpad.graphics_state, thrust: vec3(), origin: vec3( 0, 5, 0 ), looking: false } );
 
         this.graphics_state.camera_transform = mult( rotation( 20, 1, 0, 0 ), this.graphics_state.camera_transform );
@@ -69,6 +69,16 @@ Declare_Any_Class( "Example_Camera",     // An example of a displayable object t
           vec3( 0, 1, -20)]);
           //translation( 0, 1, -20 + (this.graphics_state.animation_time - posOffset[1])/100.0 )]);
 
+        var randx = getRandomNumber(-10, 100);
+        var randy = getRandomNumber(-100, 5)
+        gameObjects.push([shapes_in_use.ring, new Material( Color( 1,0,0,1 ), .4, .8, .9, 50 ), this.graphics_state.animation_time,
+          vec3( randx, randy, -50)]);
+
+        randx = getRandomNumber(-10, 100);
+        randy = getRandomNumber(-100, 5)
+        gameObjects.push([shapes_in_use.asteroid, new Material( Color( 0,0,1,1 ), .4, .8, .9, 50 ), this.graphics_state.animation_time,
+          vec3( randx, randy, -50)]);
+
 
         // *** Mouse controls: ***
         this.mouse = { "from_center": vec2() };
@@ -79,10 +89,10 @@ Declare_Any_Class( "Example_Camera",     // An example of a displayable object t
         canvas.addEventListener( "mouseout",  ( function(self) { return function(e) { self.mouse.from_center = vec2(); }; } ) (this), false );    // Stop steering if the mouse leaves the canvas.
       },
     'init_keys': function( controls )   // init_keys():  Define any extra keyboard shortcuts here
-      { 
+      {
         //move camera in and out along z axis
-        controls.add( "i",     this, function() { this.thrust[2] =  1; } );     controls.add( "i",     this, function() { this.thrust[2] =  0; }, {'type':'keyup'} ); 
-        controls.add( "o",     this, function() { this.thrust[2] =  -1; } );     controls.add( "o",     this, function() { this.thrust[2] =  0; }, {'type':'keyup'} ); 
+        controls.add( "i",     this, function() { this.thrust[2] =  1; } );     controls.add( "i",     this, function() { this.thrust[2] =  0; }, {'type':'keyup'} );
+        controls.add( "o",     this, function() { this.thrust[2] =  -1; } );     controls.add( "o",     this, function() { this.thrust[2] =  0; }, {'type':'keyup'} );
 
         // control system to move the camera angle.  If the camera is attached to a planet, only the heading can be change left/right
         controls.add( "left",  this, function() { if (attached) rotate_mod = mult( rotation( N, 0, -1, 0 ), rotate_mod);
@@ -95,8 +105,8 @@ Declare_Any_Class( "Example_Camera",     // An example of a displayable object t
       },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       { var C_inv = inverse( this.graphics_state.camera_transform ), pos = mult_vec( C_inv, vec4( 0, 0, 0, 1 ) ),
-                                                                  z_axis = mult_vec( C_inv, vec4( 0, 0, 1, 0 ) );                                                                 
-        user_interface_string_manager.string_map["origin" ] = "Center of rotation: " + this.origin[0].toFixed(0) + ", " + this.origin[1].toFixed(0) + ", " + this.origin[2].toFixed(0);                                                       
+                                                                  z_axis = mult_vec( C_inv, vec4( 0, 0, 1, 0 ) );
+        user_interface_string_manager.string_map["origin" ] = "Center of rotation: " + this.origin[0].toFixed(0) + ", " + this.origin[1].toFixed(0) + ", " + this.origin[2].toFixed(0);
         user_interface_string_manager.string_map["cam_pos"] = "Cam Position: " + pos[0].toFixed(2) + ", " + pos[1].toFixed(2) + ", " + pos[2].toFixed(2);    // The below is affected by left hand rule:
         user_interface_string_manager.string_map["facing" ] = "Facing: "       + ( ( z_axis[0] > 0 ? "West " : "East ") + ( z_axis[1] > 0 ? "Down " : "Up " ) + ( z_axis[2] > 0 ? "North" : "South" ) );
       },
@@ -132,6 +142,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
       { this.shared_scratchpad    = context.shared_scratchpad;
 
         shapes_in_use.cube        = new Cube();
+        shapes_in_use.ring        = new Torus(20, 20);
+        shapes_in_use.asteroid    = new Sphere(7, 7);
 
 
         //for some reason it won't animate by itself, even when it's set to true in tinywebgl
@@ -176,14 +188,12 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
                                                       //ambient, diffuse, specular, specular exponent
         var purplePlastic = new Material( Color( .9,.5,.9,1 ), .4, .4, .8, 40 );
 
-        shapes_in_use.cube .draw( graphics_state, mat4(), purplePlastic );
-
         var cube1 = new Material( Color( 1,1,0,1 ), .4, .8, .9, 50 ),
             cube2 = new Material( Color( 1,0,1,1 ), .4, .8, .9, 50 );
 
         var shape, material, offset, pos;
 
-        //gameobject:(shape, material, animationtime, startpos)
+        // gameobject:(shape, material, animationtime, startpos)
         for(var i =0; i < gameObjects.length; i++){
           shape = gameObjects[i][0];
           material = gameObjects[i][1];
@@ -223,3 +233,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         this.lives.innerHTML = "Lives: " + this.shared_scratchpad.game_state.lives_amount;
       }
     }, Animation);
+
+    function getRandomNumber(min, max) {
+      return Math.random() * (max - min) + min;
+    }
