@@ -55,7 +55,8 @@ Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayabl
 Declare_Any_Class( "Example_Camera",     // An example of a displayable object that our class Canvas_Manager can manage.  Adds both first-person and
   { 'construct': function( context )     // third-person style camera matrix controls to the canvas
       { // 1st parameter below is our starting camera matrix.  2nd is the projection:  The matrix that determines how depth is treated.  It projects 3D points onto a plane.
-        context.shared_scratchpad.graphics_state = new Graphics_State( translation(0, -4, 0), perspective(50, canvas.width/canvas.height, .1, 1000), 0 );
+
+        context.shared_scratchpad.graphics_state = new Graphics_State( translation(0, -20, -30), perspective(50, canvas.width/canvas.height, .1, 1000), 0 );
         this.define_data_members( { graphics_state: context.shared_scratchpad.graphics_state, thrust: vec3(), origin: vec3( 0, 5, 0 ), looking: false } );
 
         this.graphics_state.camera_transform = mult( rotation( 20, 1, 0, 0 ), this.graphics_state.camera_transform );
@@ -79,10 +80,10 @@ Declare_Any_Class( "Example_Camera",     // An example of a displayable object t
         canvas.addEventListener( "mouseout",  ( function(self) { return function(e) { self.mouse.from_center = vec2(); }; } ) (this), false );    // Stop steering if the mouse leaves the canvas.
       },
     'init_keys': function( controls )   // init_keys():  Define any extra keyboard shortcuts here
-      { 
+      {
         //move camera in and out along z axis
-        controls.add( "i",     this, function() { this.thrust[2] =  1; } );     controls.add( "i",     this, function() { this.thrust[2] =  0; }, {'type':'keyup'} ); 
-        controls.add( "o",     this, function() { this.thrust[2] =  -1; } );     controls.add( "o",     this, function() { this.thrust[2] =  0; }, {'type':'keyup'} ); 
+        controls.add( "i",     this, function() { this.thrust[2] =  1; } );     controls.add( "i",     this, function() { this.thrust[2] =  0; }, {'type':'keyup'} );
+        controls.add( "o",     this, function() { this.thrust[2] =  -1; } );     controls.add( "o",     this, function() { this.thrust[2] =  0; }, {'type':'keyup'} );
 
         // control system to move the camera angle.  If the camera is attached to a planet, only the heading can be change left/right
         controls.add( "left",  this, function() { if (attached) rotate_mod = mult( rotation( N, 0, -1, 0 ), rotate_mod);
@@ -95,8 +96,8 @@ Declare_Any_Class( "Example_Camera",     // An example of a displayable object t
       },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       { var C_inv = inverse( this.graphics_state.camera_transform ), pos = mult_vec( C_inv, vec4( 0, 0, 0, 1 ) ),
-                                                                  z_axis = mult_vec( C_inv, vec4( 0, 0, 1, 0 ) );                                                                 
-        user_interface_string_manager.string_map["origin" ] = "Center of rotation: " + this.origin[0].toFixed(0) + ", " + this.origin[1].toFixed(0) + ", " + this.origin[2].toFixed(0);                                                       
+                                                                  z_axis = mult_vec( C_inv, vec4( 0, 0, 1, 0 ) );
+        user_interface_string_manager.string_map["origin" ] = "Center of rotation: " + this.origin[0].toFixed(0) + ", " + this.origin[1].toFixed(0) + ", " + this.origin[2].toFixed(0);
         user_interface_string_manager.string_map["cam_pos"] = "Cam Position: " + pos[0].toFixed(2) + ", " + pos[1].toFixed(2) + ", " + pos[2].toFixed(2);    // The below is affected by left hand rule:
         user_interface_string_manager.string_map["facing" ] = "Facing: "       + ( ( z_axis[0] > 0 ? "West " : "East ") + ( z_axis[1] > 0 ? "Down " : "Up " ) + ( z_axis[2] > 0 ? "North" : "South" ) );
       },
@@ -130,9 +131,12 @@ Declare_Any_Class( "Example_Camera",     // An example of a displayable object t
 Declare_Any_Class( "Example_Animation",  // An example of a displayable object that our class Canvas_Manager can manage.  This one draws the scene's 3D shapes.
   { 'construct': function( context )
       { this.shared_scratchpad    = context.shared_scratchpad;
-
-        shapes_in_use.cube        = new Cube();
-
+        // Spaceship shapes
+        shapes_in_use.cube = new Cube();
+        shapes_in_use.cylindrical_tube = new Cylindrical_Tube(5, 20);
+        shapes_in_use.capped_cylinder = new Capped_Cylinder(5, 20);
+        shapes_in_use.rounded_closed_cone = new Rounded_Closed_Cone(5, 30);
+        shapes_in_use.sphere    = new Subdivision_Sphere( 4 );
 
         //for some reason it won't animate by itself, even when it's set to true in tinywebgl
         this.shared_scratchpad.animate   = true;
@@ -150,7 +154,57 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         user_interface_string_manager.string_map["time"]    = "Animation Time: " + Math.round( this.shared_scratchpad.graphics_state.animation_time )/1000 + "s";
         user_interface_string_manager.string_map["animate"] = "Animation " + (this.shared_scratchpad.animate ? "on" : "off") ;
       },
+      'spaceship': function(model_transform, graphics_state, prescale)
+      { // MATERIALS, VARIABLES
+        var icyGray = new Material( Color(.6, .6, .7, 1), .8, .5, .4, 20 ),
+        blueGray = new Material( Color(.5, .6, .7, 1), .8, .5, .4, 20 );
+        var bodyCenter;
+        var wing;
 
+        // BODY
+        bodyCenter = model_transform;
+        model_transform = mult( model_transform, scale(prescale * 2.4, prescale * 2.4, prescale * 14));
+        shapes_in_use.capped_cylinder.draw( graphics_state, model_transform, blueGray);
+
+        // TIP
+        model_transform = bodyCenter;
+        model_transform = mult(model_transform, rotation(180, 0, 1, 0));  // place on other side
+        model_transform = mult( model_transform, translation( prescale * 0, prescale * 0, prescale * 9.9 ) );
+        model_transform = mult( model_transform, scale(prescale * 3, prescale * 3, prescale * 3) );
+        shapes_in_use.rounded_closed_cone.draw(graphics_state, model_transform, icyGray);
+
+        // WINGS
+        for (var i = 0; i < 2; i++){
+         model_transform = bodyCenter;
+         model_transform = mult(model_transform, translation(prescale * 5.3 * Math.pow(-1, i), prescale * 0, prescale * 1));
+         // shear
+         model_transform = mult( model_transform, mat4(1, 0, 0, 0,
+                                                       0, 1, 0, 0,
+                                                       1 * Math.pow(-1, i), 0, 1, 0,
+                                                       0, 0, 0, 1) );
+         model_transform = mult(model_transform, scale(prescale * 3, prescale * .5, prescale * 3));
+         shapes_in_use.cube.draw( graphics_state, model_transform, icyGray);
+
+         // SIDE CYLINDERS
+         model_transform = bodyCenter;
+         model_transform = mult(model_transform, translation(prescale * 9 * Math.pow(-1, i), prescale * 0, prescale * 3.5));
+         model_transform = mult( model_transform, scale(prescale * .8, prescale * .8, prescale * 9) );
+         shapes_in_use.capped_cylinder.draw( graphics_state, model_transform, blueGray);
+
+         // SIDE TOP SPHERES
+         model_transform = bodyCenter;
+         model_transform = mult(model_transform, translation(prescale * 9 * Math.pow(-1, i), prescale * 0, prescale * -1));
+         model_transform = mult( model_transform, scale(prescale * .8, prescale * .8, prescale * 1) );
+         shapes_in_use.sphere.draw( graphics_state, model_transform, icyGray);
+         }
+
+        // BUTT
+        model_transform = bodyCenter;
+        model_transform = mult(model_transform, rotation(180, 0, 1, 0));  // place on other side
+        model_transform = mult( model_transform, translation(prescale * 0, prescale * 0, prescale * -7 ) );
+        model_transform = mult( model_transform, scale(prescale * 3, prescale * 3, prescale * 3) );
+        shapes_in_use.rounded_closed_cone.draw(graphics_state, model_transform, icyGray);
+      },
     'display': function(time)
       {
         //this.shared_scratchpad.graphics_state.camera_transform = mult( rotation( 8, -1, 0, 0 ), this.shared_scratchpad.graphics_state.camera_transform );
@@ -167,16 +221,17 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         graphics_state.lights = [];                    // First clear the light list each frame so we can replace & update lights.
 
         var t = graphics_state.animation_time/1000, light_orbit = [ Math.cos(t), Math.sin(t) ];
-        //graphics_state.lights.push( new Light( vec4( 0,4,0, 1 ), Color( 1, 1, 1, 1 ), 20 ) );
-        //graphics_state.lights.push( new Light( vec4( -10*light_orbit[0], -20*light_orbit[1], -14*light_orbit[0], 0 ), Color( 1, 1, .3, 1 ), 100*Math.cos( t/10 ) ) );
+        graphics_state.lights.push( new Light( vec4( 0, 2 , 3, 1 ), Color( 1, 1, 1, 1 ), 20 ) );
+        // graphics_state.lights.push( new Light( vec4( -10*light_orbit[0], -20*light_orbit[1], -14*light_orbit[0], 0 ), Color( 1, 1, .3, 1 ), 100*Math.cos( t/10 ) ) );
 
         // *** Materials: *** Declare new ones as temps when needed; they're just cheap wrappers for some numbers.
         // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
         // Omit the final (string) parameter if you want no texture
                                                       //ambient, diffuse, specular, specular exponent
-        var purplePlastic = new Material( Color( .9,.5,.9,1 ), .4, .4, .8, 40 );
 
-        shapes_in_use.cube .draw( graphics_state, mat4(), purplePlastic );
+        // MAKE A SPACESHIP
+        var prescale = .5;  // control spaceship size
+        this.spaceship(model_transform, graphics_state, prescale);  // specify position, etc with model_transform
 
         var cube1 = new Material( Color( 1,1,0,1 ), .4, .8, .9, 50 ),
             cube2 = new Material( Color( 1,0,1,1 ), .4, .8, .9, 50 );
@@ -204,7 +259,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
   /* ==============================
 
-  Being writing our own classes here:
+  Begin writing our own classes here:
 
   =============================== */
 
