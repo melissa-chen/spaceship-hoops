@@ -18,7 +18,7 @@ index.html - The web page document containing the canvas (drawing surface), that
   <script type="text/javascript" src="example-shaders.js"></script>
   <script type="text/javascript">
     "use strict"
-    window.onload = function init() // ********************* OUR WHOLE PROGRAM'S ENTRY POINT ********************* 
+    window.onload = function init() // ********************* OUR WHOLE PROGRAM'S ENTRY POINT *********************
     {
       var main_canvas = new Canvas_Manager("gl-canvas", Color(0, 0, 0, 1)), // Make the master canvas manager.  Set your background color here too.
         g_state = main_canvas.shared_scratchpad.graphics_state;
@@ -38,7 +38,7 @@ index.html - The web page document containing the canvas (drawing surface), that
       main_canvas.render();
     }
 
-    window.requestAnimFrame = (function () // Use the correct browser's version of requestAnimationFrame() when queue-ing up re-display events. 
+    window.requestAnimFrame = (function () // Use the correct browser's version of requestAnimationFrame() when queue-ing up re-display events.
       {
         return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame ||
           window.oRequestAnimationFrame || window.msRequestAnimationFrame ||
