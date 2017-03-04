@@ -19,7 +19,6 @@ Declare_Any_Class( "Surface_Of_Revolution",
           {
             var spin = ( total_curvature_angle == 0 ) ? translation( 0, j, 0 ) : rotation( j * total_curvature_angle/columns, 0, 0, 1 );
             this.positions.push( mult_vec( spin, currPoint ).slice(0,3) );           this.normals.push( mult_vec( spin, normal ).slice(0,3) );
-            console.log("texturing here");
             this.texture_coords.push( vec2( j/(columns*2), -i/(rows*2) ) );
           }
         }

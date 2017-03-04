@@ -245,7 +245,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           offset = gameObjects[i][2];
           pos = gameObjects[i][3];
           zpos = pos[2] + (graphics_state.animation_time - offset)/60.0;
-          if (zpos > 0){
+          if (zpos > 10){
             gameObjects.splice(i, 1);
             continue;
           }
