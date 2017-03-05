@@ -4,9 +4,39 @@
 
 // Now go down to Example_Animation's display() function to see where the sample shapes you see drawn are coded, and a good place to begin filling in your own code.
 
-
+var spaceship_transform = mat4();
 var posOffset = [];
 var gameObjects = [];
+
+// Stuff to control spaceship movement
+
+// var maxRotations = 5;
+// var rightRot = 0;
+// var leftRot = 0;
+
+var playerlocationx = 0;
+var maxspeed = 4;
+var xforce = 0;
+var pixelx = 0;
+var key_left = false;
+var key_right = false;
+
+window.addEventListener('keydown', handleKeyDown, true)
+window.addEventListener('keyup', handleKeyUp, true)
+
+function handleKeyDown(event){
+  if (event.keyCode == 37)
+          key_left = true;
+  else if (event.keyCode == 39)
+      key_right = true;
+}
+
+function handleKeyUp(event){
+  if (event.keyCode == 37)
+      key_left = false;
+  else if (event.keyCode == 39)
+      key_right = false;
+}
 
 Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayable object that our class Canvas_Manager can manage.  Displays a text user interface.
   { 'construct': function( context )
@@ -96,13 +126,38 @@ Declare_Any_Class( "Example_Camera",     // An example of a displayable object t
         controls.add( "i",     this, function() { this.thrust[2] =  1; } );     controls.add( "i",     this, function() { this.thrust[2] =  0; }, {'type':'keyup'} );
         controls.add( "o",     this, function() { this.thrust[2] =  -1; } );     controls.add( "o",     this, function() { this.thrust[2] =  0; }, {'type':'keyup'} );
 
-        // control system to move the camera angle.  If the camera is attached to a planet, only the heading can be change left/right
-        controls.add( "left",  this, function() { if (attached) rotate_mod = mult( rotation( N, 0, -1, 0 ), rotate_mod);
-                                                  else this.graphics_state.camera_transform = mult( rotation( N, 0, -1, 0 ), this.graphics_state.camera_transform ); });
-        controls.add( "right",  this, function() { if (attached) rotate_mod = mult( rotation( N, 0, 1, 0 ), rotate_mod);
-                                                  else this.graphics_state.camera_transform = mult( rotation( N, 0, 1, 0 ), this.graphics_state.camera_transform ); });
-        controls.add( "up",  this, function() { if (!attached) this.graphics_state.camera_transform = mult( rotation( N, -1, 0, 0 ), this.graphics_state.camera_transform ); });
-        controls.add( "down",  this, function() { if (!attached) this.graphics_state.camera_transform = mult( rotation( N, 1, 0, 0 ), this.graphics_state.camera_transform ); });
+    //    control system to move the camera angle.  If the camera is attached to a planet, only the heading can be change left/right
+        // controls.add( "left",  this, function() {
+        //   spaceship_transform = mult( translation( -.5, 0, 0, 0 ), spaceship_transform );
+        //
+        //   if (leftRot <= maxRotations) {
+        //     leftRot++;
+        //     rightRot--;
+        //     var zRotationMatrix = mat4();
+        //     zRotationMatrix = mult(zRotationMatrix, rotation(-3, [0, 0, 1]));
+        //     spaceship_transform = mult(spaceship_transform, zRotationMatrix);
+        //   }
+        //
+        // });
+        // controls.add( "right",  this, function() {
+        //   spaceship_transform = mult( translation( .5, 0, 0, 0 ), spaceship_transform );
+        //
+        //   if (rightRot <= maxRotations) {
+        //     rightRot++;
+        //     leftRot--;
+        //     var zRotationMatrix = mat4();
+        //     zRotationMatrix = mult(zRotationMatrix, rotation(3, [0, 0, 1]));
+        //     spaceship_transform = mult(spaceship_transform, zRotationMatrix);
+        //   }
+        // });
+
+        //  TODO: limit camera up/down changes
+        controls.add( "up",  this, function() {
+          this.graphics_state.camera_transform = mult( rotation( 2, -1, 0, 0 ), this.graphics_state.camera_transform );
+        });
+        controls.add( "down",  this, function() {
+          this.graphics_state.camera_transform = mult( rotation( 2, 1, 0, 0 ), this.graphics_state.camera_transform );
+        });
 
       },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
@@ -152,7 +207,6 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         shapes_in_use.rounded_closed_cone = new Rounded_Closed_Cone(5, 30);
         shapes_in_use.sphere    = new Subdivision_Sphere( 4 );
 
-
         //for some reason it won't animate by itself, even when it's set to true in tinywebgl
         this.shared_scratchpad.animate   = true;
       },
@@ -169,7 +223,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         user_interface_string_manager.string_map["time"]    = "Animation Time: " + Math.round( this.shared_scratchpad.graphics_state.animation_time )/1000 + "s";
         user_interface_string_manager.string_map["animate"] = "Animation " + (this.shared_scratchpad.animate ? "on" : "off") ;
       },
-      'spaceship': function(model_transform, graphics_state, prescale, texture)
+    'spaceship': function(model_transform, graphics_state, prescale, texture)
       { // MATERIALS, VARIABLES
         var icyGray = new Material( Color(.6, .6, .7, 1), .4, .1, .1, 20, texture ),
         blueGray = new Material( Color(.5, .6, .7, 1), .4, .1, .1, 20, texture);
@@ -244,10 +298,51 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         // Omit the final (string) parameter if you want no texture
                                                       //ambient, diffuse, specular, specular exponent
 
-        // MAKE A SPACESHIP
-        var prescale = .5;  // control spaceship size
-        this.spaceship(model_transform, graphics_state, prescale, "img/metal-height-map.png");  // specify position, etc with model_transform
+        // FIRST: Make the background (giant cube texture mapped with sky)
+        var backgroundSky = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/starry-sky.jpg");
+        var sky_transform = mult(mat4(), scale(500, 500, 500));
+        shapes_in_use.cube.draw(graphics_state, sky_transform, backgroundSky);
 
+        // ************ MAKE A SPACESHIP ********** //
+        // CONTROL MOVEMENT
+        spaceship_transform = mat4();
+        if (key_left){
+          xforce--;
+        }
+        if (key_right){
+            xforce++;
+        }
+        // handle acceleration
+        if (xforce > maxspeed)
+            xforce = maxspeed;
+        if (xforce < -maxspeed)
+            xforce = -maxspeed;
+
+        // abrupt stop
+        if (!key_left && !key_right){
+           pixelx = 0;
+           xforce = 0;
+        }
+
+        else{
+           pixelx += xforce;
+        }
+
+        // bounded movement range
+        playerlocationx = playerlocationx + pixelx;
+        if (playerlocationx >= 2500)
+          playerlocationx = 2500;
+        if (playerlocationx <= -2500)
+          playerlocationx = -2500;
+
+        spaceship_transform = mult(spaceship_transform,  translation(playerlocationx/100, 0, 0, 0 ), spaceship_transform );
+
+        var prescale = .5;  // control spaceship size
+
+        this.spaceship(model_transform, graphics_state, prescale, "images/metal-height-map.png");  // specify position, etc with model_transform
+
+
+        // ************ GAME OBJECTS ********** //
 
         var cube1 = new Material( Color( 1,1,0,1 ), .4, .8, .9, 50 ),
             cube2 = new Material( Color( 1,0,1,1 ), .4, .8, .9, 50 );
