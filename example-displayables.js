@@ -7,6 +7,20 @@
 
 var posOffset = [];
 var gameObjects = [];
+var counter = 1;
+var nodecount =0 ;
+var head, tail;
+
+function Node(data) {
+    this.data = data;
+    this.next = null;
+}
+
+function add_object_helper(shape, material, time, position){
+    tail.next = new Node([shape, material, time, position]);
+    tail = tail.next;
+    nodecount++;
+}
 
 Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayable object that our class Canvas_Manager can manage.  Displays a text user interface.
   { 'construct': function( context )
@@ -61,13 +75,15 @@ Declare_Any_Class( "Example_Camera",     // An example of a displayable object t
         this.graphics_state.camera_transform = mult( rotation( 20, 1, 0, 0 ), this.graphics_state.camera_transform );
 
         //gameobject:(shape, material, animationtime, startpos)
-
-        gameObjects.push([shapes_in_use.cube, new Material( Color( 1,1,0,1 ), .4, .8, .9, 50 ), this.graphics_state.animation_time,
+        head = new Node([shapes_in_use.cube, new Material( Color( 1,1,0,1 ), .4, .8, .9, 50 ), this.graphics_state.animation_time,
           vec3( 0, 1, -50)]);
+        nodecount++;
 
-        gameObjects.push([shapes_in_use.cube, new Material( Color( 1,0,1,1 ), .4, .8, .9, 50 ), this.graphics_state.animation_time,
+        tail = new Node([shapes_in_use.cube, new Material( Color( 1,0,1,1 ), .4, .8, .9, 50 ), this.graphics_state.animation_time,
           vec3( 0, 1, -20)]);
-          //translation( 0, 1, -20 + (this.graphics_state.animation_time - posOffset[1])/100.0 )]);
+
+        head.next = tail;
+
 
 
         // *** Mouse controls: ***
@@ -127,6 +143,8 @@ Declare_Any_Class( "Example_Camera",     // An example of a displayable object t
       }
   }, Animation );
 
+
+
 Declare_Any_Class( "Example_Animation",  // An example of a displayable object that our class Canvas_Manager can manage.  This one draws the scene's 3D shapes.
   { 'construct': function( context )
       { this.shared_scratchpad    = context.shared_scratchpad;
@@ -158,8 +176,10 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
             model_transform = mat4();             // We have to reset model_transform every frame, so that as each begins, our basis starts as the identity.
         shaders_in_use[ "Default" ].activate();
 
-        function add_object_to_scene(obj){
+        counter++;
 
+        function add_object(shape, material, position){
+          add_object_helper(shape, material, graphics_state.animation_time, position);
         }
 
         // *** Lights: *** Values of vector or point lights over time.  Arguments to construct a Light(): position or vector (homogeneous coordinates), color, size
@@ -176,27 +196,40 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
                                                       //ambient, diffuse, specular, specular exponent
         var purplePlastic = new Material( Color( .9,.5,.9,1 ), .4, .4, .8, 40 );
 
-        shapes_in_use.cube .draw( graphics_state, mat4(), purplePlastic );
+        
+        if (counter % 50 == 0){
+          counter = 0;
+          add_object(shapes_in_use.cube, purplePlastic, vec3(0, 1, -100));
+        }
 
         var cube1 = new Material( Color( 1,1,0,1 ), .4, .8, .9, 50 ),
             cube2 = new Material( Color( 1,0,1,1 ), .4, .8, .9, 50 );
 
-        var shape, material, offset, pos;
+        var shape, material, offset, pos, zpos;
 
         //gameobject:(shape, material, animationtime, startpos)
-        for(var i =0; i < gameObjects.length; i++){
-          shape = gameObjects[i][0];
-          material = gameObjects[i][1];
-          offset = gameObjects[i][2];
-          pos = gameObjects[i][3];
+        var iterator = head;
+        while(iterator != null){
+          gameObject = iterator.data;
+          pos = gameObject[3];
+          offset = gameObject[2];
           zpos = pos[2] + (graphics_state.animation_time - offset)/60.0;
-          if (zpos > 0){
-            gameObjects.splice(i, 1);
+
+          console.log(nodecount);
+          if (zpos > 0 && iterator == head){
+            nodecount--;
+            head = head.next;
+            iterator = iterator.next;
             continue;
           }
+
+          shape = gameObject[0];
+          material = gameObject[1];
+
           model_transform = mat4();
           model_transform = mult(translation(pos[0], pos[1], zpos) , model_transform );
           shape.draw( graphics_state, model_transform, material);
+          iterator = iterator.next;
         }
 
       }
