@@ -169,10 +169,10 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         user_interface_string_manager.string_map["time"]    = "Animation Time: " + Math.round( this.shared_scratchpad.graphics_state.animation_time )/1000 + "s";
         user_interface_string_manager.string_map["animate"] = "Animation " + (this.shared_scratchpad.animate ? "on" : "off") ;
       },
-      'spaceship': function(model_transform, graphics_state, prescale)
+      'spaceship': function(model_transform, graphics_state, prescale, texture)
       { // MATERIALS, VARIABLES
-        var icyGray = new Material( Color(.6, .6, .7, 1), .8, .5, .4, 20 ),
-        blueGray = new Material( Color(.5, .6, .7, 1), .8, .5, .4, 20 );
+        var icyGray = new Material( Color(.6, .6, .7, 1), .4, .1, .1, 20, texture ),
+        blueGray = new Material( Color(.5, .6, .7, 1), .4, .1, .1, 20, texture);
         var bodyCenter;
         var wing;
 
@@ -246,7 +246,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
         // MAKE A SPACESHIP
         var prescale = .5;  // control spaceship size
-        this.spaceship(model_transform, graphics_state, prescale);  // specify position, etc with model_transform
+        this.spaceship(model_transform, graphics_state, prescale, "img/metal-height-map.png");  // specify position, etc with model_transform
 
 
         var cube1 = new Material( Color( 1,1,0,1 ), .4, .8, .9, 50 ),
@@ -295,6 +295,6 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
       }
     }, Animation);
 
-    function getRandomNumber(min, max) {
-      return Math.random() * (max - min) + min;
-    }
+  function getRandomNumber(min, max) {
+    return Math.random() * (max - min) + min;
+  }
