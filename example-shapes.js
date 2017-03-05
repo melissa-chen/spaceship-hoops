@@ -98,106 +98,6 @@ Declare_Any_Class( "Windmill",          // As our shapes get more complicated, w
       }
   }, Shape )
 
-  // *********** Sphere ***********
-  Declare_Any_Class( "Sphere",          // As our shapes get more complicated, we begin using matrices and flow control (including loops) to
-    { 'populate': function( num_bands, using_flat_shading, radius)  // generate non-trivial point clouds and connect them.
-        {
-            //use curr in the functions because 'this' will refer to the 'this' of the function, not the class
-            var curr = this;
-            var numIndices = 0;
-
-            function duplicate_the_shared_vertices( offset = 0, index_offset = 0 )
-            { // Prepare an indexed shape for flat shading if it is not ready -- that is, if there are any edges where the same vertices are indexed by
-              // both the adjacent triangles, and those two triangles are not co-planar.  The two would therefore fight over assigning different normal vectors to the shared vertices.
-              var temp_positions = curr.positions.slice( 0, offset ), temp_tex_coords = curr.texture_coords.slice( 0, offset ), temp_normals = curr.normals.slice( 0, offset );
-              var temp_indices   = curr.indices.slice( 0, index_offset );
-
-              for( var counter = index_offset; counter <curr.indices.length; counter++ )
-                { temp_positions.push( curr.positions[ curr.indices[ counter ] ] );   temp_tex_coords.push( curr.texture_coords[ curr.indices[ counter ] ] );
-                  temp_indices.push( temp_positions.length - 1 );    }
-              curr.positions =  temp_positions;       curr.indices = temp_indices;    curr.texture_coords = temp_tex_coords;
-            }
-
-            function flat_shade( index_offset = 0 )
-            { // Automatically assign the correct normals to each triangular element to achieve flat shading.  Affect all recently added triangles (those past "offset" in the list).
-              // Assumes that no vertices are shared across seams.
-              for( var counter = index_offset; counter < curr.indices.length; counter += 3 )         // Iterate through triangles (every triple in the "indices" array)
-              { var indices = curr.indexed ? [ curr.indices[ counter ], curr.indices[ counter + 1 ], curr.indices[ counter + 2 ] ] : [ counter, counter + 1, counter + 2 ];
-                var p1 = curr.positions[ indices[0] ],     p2 = curr.positions[ indices[1] ],      p3 = curr.positions[ indices[2] ];
-                var n1 = normalize( cross( subtract(p1, p2), subtract(p3, p1) ) );    // Cross two edge vectors of this triangle together to get the normal
-
-                 if( length( add( scale_vec( .1, n1 ), p1 ) ) < length( p1 ) )
-                   n1 = scale_vec( -1, n1 );                    // Flip the normal if adding it to the triangle brings it closer to the origin.
-
-                curr.normals[ indices[0] ] = curr.normals[ indices[1] ] = curr.normals[ indices[2] ] = vec3( n1[0], n1[1], n1[2] );   // Propagate the normal to the 3 vertices.
-              }
-            }
-
-            function iterativeSphere(num_bands, using_flat_shading, radius_size){
-
-            var latitudeBands = num_bands;
-            var longitudeBands = num_bands;
-            var radius = radius_size;
-
-
-            var count = 0;
-            var points = [];
-
-            for (var latNumber = 0; latNumber <= latitudeBands; latNumber++) {
-              var theta = latNumber * Math.PI / latitudeBands;
-              var sinTheta = Math.sin(theta);
-              var cosTheta = Math.cos(theta);
-              for (var longNumber = 0; longNumber <= longitudeBands; longNumber++) {
-                var phi = longNumber * 2 * Math.PI / longitudeBands;
-                var sinPhi = Math.sin(phi);
-                var cosPhi = Math.cos(phi);
-                var x = cosPhi * sinTheta;
-                var y = cosTheta;
-                var z = sinPhi * sinTheta;
-                var u = 1- (longNumber / longitudeBands);
-                var v = latNumber / latitudeBands;
-
-                curr.positions.push(vec3(radius * x, radius * y, radius * z));
-
-                //push the point vector into a list of points
-                points.push(vec3(radius * x, radius * y, radius * z));
-
-                //curr.texture_coords.push(vec2(u,v));
-                if (!using_flat_shading){
-                  //smooth
-                  curr.normals.push(vec3(x,y,z));
-                }
-
-              }
-              count++;
-            }
-
-            for (var latNumber = 0; latNumber < latitudeBands; latNumber++) {
-              for (var longNumber = 0; longNumber < longitudeBands; longNumber++) {
-                var first = (latNumber * (longitudeBands + 1)) + longNumber;
-                var second = first + longitudeBands + 1;
-                curr.indices.push(first);
-                curr.indices.push(second);
-                curr.indices.push(first + 1);
-
-                curr.indices.push(second);
-                curr.indices.push(second + 1);
-                curr.indices.push(first + 1);
-              }
-            }
-
-
-          }
-          
-          iterativeSphere(num_bands, using_flat_shading, radius);
-          //if flat_shading is selected, must go through some extra steps
-          if(using_flat_shading){
-            duplicate_the_shared_vertices();
-            flat_shade();
-          }
-        }
-    }, Shape )
-
 // 3.  COMPOUND SHAPES, BUILT FROM THE ABOVE HELPER SHAPES      ------------------------------------------------------------------------------------------
 
 Declare_Any_Class( "Text_Line", // Draws a rectangle textured with images of ASCII characters textured over each quad, spelling out a string.
@@ -234,3 +134,40 @@ Declare_Any_Class( "Text_Line", // Draws a rectangle textured with images of ASC
         gl.bufferData( gl.ARRAY_BUFFER, flatten(this.texture_coords), gl.STATIC_DRAW );
       }
   }, Shape )
+
+// *********** SPHERE ***********
+Declare_Any_Class( "Subdivision_Sphere",      // A subdivision surface ( Wikipedia ) is initially simple, then builds itself into a more and more detailed shape of the same
+{                                           // layout.  Each act of subdivision makes it a better approximation of some desired mathematical surface by projecting each new
+                                            // point onto that surface's known implicit equation.  For a sphere, we begin with a closed 3-simplex (a tetrahedron).  For
+                                            // each face, connect the midpoints of each edge together to make more faces.  Repeat recursively until the desired level of
+  populate: function ( max_subdivisions )   // detail is obtained.  Project all new vertices to unit vectors (onto the unit sphere) and group them into triangles by
+    {                                       // following the predictable pattern of the recursion.
+      this.positions.push( [ 0, 0, -1 ], [ 0, .9428, .3333 ], [ -.8165, -.4714, .3333 ], [ .8165, -.4714, .3333 ] );  // Start with this equilateral tetrahedron
+
+      var subdivideTriangle = function( a, b, c, count )   // This function will recurse through each level of detail by splitting triangle (a,b,c) into four smaller ones.
+        {
+          if( count <= 0) { this.indices.push(a,b,c); return; }  // Base case of recursion - we've hit the finest level of detail we want.
+
+          var ab_vert = normalize( mix( this.positions[a], this.positions[b], 0.5) ),     // We're not at the base case.  So,
+              ac_vert = normalize( mix( this.positions[a], this.positions[c], 0.5) ),     // build 3 new vertices at midpoints, and extrude them out to
+              bc_vert = normalize( mix( this.positions[b], this.positions[c], 0.5) );     // touch the unit sphere (length 1).
+
+          var ab = this.positions.push( ab_vert ) - 1,      // Here, push() returns the indices of the three new vertices (plus one).
+              ac = this.positions.push( ac_vert ) - 1,
+              bc = this.positions.push( bc_vert ) - 1;
+
+          subdivideTriangle.call( this, a, ab, ac,  count - 1 );      // Recurse on four smaller triangles, and we're done.
+          subdivideTriangle.call( this, ab, b, bc,  count - 1 );      // Skipping every fourth vertex index in our list takes you down one level of detail, and
+          subdivideTriangle.call( this, ac, bc, c,  count - 1 );      // so on, due to the way we're building it.
+          subdivideTriangle.call( this, ab, bc, ac, count - 1 );
+        }
+      subdivideTriangle.call( this, 0, 1, 2, max_subdivisions);  // Begin recursion.
+      subdivideTriangle.call( this, 3, 2, 1, max_subdivisions);
+      subdivideTriangle.call( this, 1, 0, 3, max_subdivisions);
+      subdivideTriangle.call( this, 0, 2, 3, max_subdivisions);
+
+      for( let p of this.positions )
+        { this.normals       .push( p.slice() );    // Each point has a normal vector that simply goes to the point from the origin.  Copy array value using slice().
+          this.texture_coords.push( vec2( .5 + Math.atan2( p[2], p[0] ) / 2 / Math.PI, .5 - 2 * Math.asin( p[1] ) / 2 / Math.PI ) ); }
+    }
+}, Shape )

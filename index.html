@@ -4,11 +4,10 @@ index.html - The web page document containing the canvas (drawing surface), that
 <html>
 
 <head>
+  </div>
   <meta charset="UTF-8" />
-
   <!--our own css-->
   <link rel="stylesheet" type="text/css" href="css/style.css">
-
   <script type="text/javascript" src="MV.js"></script>
   <!--  Javascript "include" files.  Any code in them gets executed as part of the page loading.  //-->
   <script type="text/javascript" src="tinywebgl-ucla.js"></script>
@@ -18,7 +17,7 @@ index.html - The web page document containing the canvas (drawing surface), that
   <script type="text/javascript" src="example-shaders.js"></script>
   <script type="text/javascript">
     "use strict"
-    window.onload = function init() // ********************* OUR WHOLE PROGRAM'S ENTRY POINT ********************* 
+    window.onload = function init() // ********************* OUR WHOLE PROGRAM'S ENTRY POINT *********************
     {
       var main_canvas = new Canvas_Manager("gl-canvas", Color(0, 0, 0, 1)), // Make the master canvas manager.  Set your background color here too.
         g_state = main_canvas.shared_scratchpad.graphics_state;
@@ -27,6 +26,8 @@ index.html - The web page document containing the canvas (drawing surface), that
       shaders_in_use["Funny_Shader"] = new Funny_Shader(g_state);
       // IMPORTANT: -- You have to include all your new images in here:
       texture_filenames_to_load.push("text.png"); // Put all our texture images in the GPU.
+      texture_filenames_to_load.push( "images/starry-sky.jpg" );
+
       for (var i = 0; i < texture_filenames_to_load.length; i++) textures_in_use[texture_filenames_to_load[i]] = (new Texture(
         texture_filenames_to_load[i], false));
 
@@ -36,9 +37,17 @@ index.html - The web page document containing the canvas (drawing surface), that
 
       main_canvas.register_display_object(new Score_Screen(main_canvas));
       main_canvas.render();
-    }
 
-    window.requestAnimFrame = (function () // Use the correct browser's version of requestAnimationFrame() when queue-ing up re-display events. 
+      // PLAY BACKGROUND MUSIC ON LOOP
+      var audio = new Audio('sound/Omega_Sector.mp3');
+      audio.addEventListener('ended', function() {
+        this.currentTime = 0;
+        this.play();
+      }, false);
+      audio.play();
+      }
+
+    window.requestAnimFrame = (function () // Use the correct browser's version of requestAnimationFrame() when queue-ing up re-display events.
       {
         return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame ||
           window.oRequestAnimationFrame || window.msRequestAnimationFrame ||
@@ -53,6 +62,7 @@ index.html - The web page document containing the canvas (drawing surface), that
   <span id="score-text">Score: </span>
   <span id="lives-text">Lives: </span>
   <canvas id="gl-canvas" width="1200" height="600"></canvas>
+
 </body>
 
 </html>
