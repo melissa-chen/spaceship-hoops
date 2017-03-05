@@ -27,6 +27,8 @@ index.html - The web page document containing the canvas (drawing surface), that
       shaders_in_use["Funny_Shader"] = new Funny_Shader(g_state);
       // IMPORTANT: -- You have to include all your new images in here:
       texture_filenames_to_load.push("text.png"); // Put all our texture images in the GPU.
+      texture_filenames_to_load.push( "images/galaxy.jpg" );
+
       for (var i = 0; i < texture_filenames_to_load.length; i++) textures_in_use[texture_filenames_to_load[i]] = (new Texture(
         texture_filenames_to_load[i], false));
 
