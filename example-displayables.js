@@ -121,25 +121,13 @@ Declare_Any_Class( "Example_Camera",     // An example of a displayable object t
 
         //gameobject:(shape, material, animationtime, startpos)
         head = new Node([shapes_in_use.cube, new Material( Color( 1,1,0,1 ), .4, .8, .9, 50 ), this.graphics_state.animation_time,
-          vec3( 0, 1, -50)]);
+          vec3( -1, 1, -50)]);
         nodecount++;
 
         tail = new Node([shapes_in_use.cube, new Material( Color( 1,0,1,1 ), .4, .8, .9, 50 ), this.graphics_state.animation_time,
-          vec3( 0, 1, -20)]);
+          vec3( 0, 1, -50)]);
 
         head.next = tail;
-
-
-        var randx = getRandomNumber(-10, 100);
-        var randy = getRandomNumber(-100, 5)
-        gameObjects.push([shapes_in_use.ring, new Material( Color( 1,0,0,1 ), .4, .8, .9, 50 ), this.graphics_state.animation_time,
-          vec3( randx, randy, -50)]);
-
-        randx = getRandomNumber(-10, 100);
-        randy = getRandomNumber(-100, 5)
-        gameObjects.push([shapes_in_use.asteroid, new Material( Color( 0,0,1,1 ), .4, .8, .9, 50 ), this.graphics_state.animation_time,
-          vec3( randx, randy, -50)]);
-
 
         // *** Mouse controls: ***
         this.mouse = { "from_center": vec2() };
@@ -229,8 +217,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
   { 'construct': function( context )
       { this.shared_scratchpad    = context.shared_scratchpad;
         shapes_in_use.cube        = new Cube();
-        shapes_in_use.ring        = new Torus(20, 20);
-        shapes_in_use.asteroid    = new Sphere(7, 7);
+        shapes_in_use.ring        = new Torus(25, 25, 0.8);
+        shapes_in_use.asteroid    = new Sphere(7, 7, 3);
 
 
         shapes_in_use.cylindrical_tube = new Cylindrical_Tube(5, 20);
@@ -314,7 +302,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
         counter++;
 
-        function add_object(shape, material, position){
+        function add_object(shape, material, position) {
           add_object_helper(shape, material, graphics_state.animation_time, position);
         }
 
@@ -330,11 +318,11 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
         // Omit the final (string) parameter if you want no texture
                                                       //ambient, diffuse, specular, specular exponent
-        
-        
+
+
 
         // FIRST: Make the background (giant cube texture mapped with sky)
-        var backgroundSky = new Material(Color(0,0,0,1), 1, 1, 1, 40, "starry-sky.jpg");
+        var backgroundSky = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/starry-sky.jpg");
         var sky_transform = mult(mat4(), scale(500, 500, 500));
         shapes_in_use.cube.draw(graphics_state, sky_transform, backgroundSky);
 
@@ -401,11 +389,19 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         // ************ GAME OBJECTS ********** //
 
         var cube1 = new Material( Color( 1,1,0,1 ), .4, .8, .9, 50 ),
-            cube2 = new Material( Color( 1,0,1,1 ), .4, .8, .9, 50 );
+            cube2 = new Material( Color( 1,0,1,1 ), .4, .8, .9, 50 ),
+            asteroidTexture = new Material ( Color(1, 1, 1, 1), .4, .8, .9, 50, "images/asteroid.jpg");
+
+
+        var randx = getRandomNumber(-50, 50);
+        var randy = getRandomNumber(-20, 20)
 
         if (counter % 50 == 0){
           counter = 0;
-          add_object(shapes_in_use.cube, cube1, vec3(0, 1, -100));
+          add_object(shapes_in_use.asteroid, asteroidTexture, vec3(randx, randy, -100));
+          randx = getRandomNumber(-50, 50);
+          randy = getRandomNumber(-20, 20)
+          add_object(shapes_in_use.ring, cube1, vec3(randx, randy, -100));
         }
 
         var shape, material, offset, pos, zpos;
@@ -418,7 +414,6 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
           zpos = pos[2] + (graphics_state.animation_time - offset)/60.0;
 
-          console.log(nodecount);
           if (zpos > 0 && iterator == head){
             nodecount--;
             head = head.next;
@@ -431,6 +426,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
           model_transform = mat4();
           model_transform = mult(translation(pos[0], pos[1], zpos) , model_transform );
+
           shape.draw( graphics_state, model_transform, material);
           iterator = iterator.next;
         }

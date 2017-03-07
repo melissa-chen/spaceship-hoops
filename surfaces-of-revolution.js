@@ -45,16 +45,16 @@ Declare_Any_Class( "Cone_Tip",            // Note:  Curves that touch the Z axis
       { Surface_Of_Revolution.prototype.insert_transformed_copy_into( this, [ rows, columns, [ vec3( 0, 0,  1 ), vec3( 1, 0, -1 ) ] ] ); } }, Shape )
 
 Declare_Any_Class( "Torus",
-  { populate: function( rows, columns )
+  { populate: function( rows, columns, scale )
       { var circle_points = [];
-        for( var i = 0; i <= rows; i++ )   circle_points.push( vec3( 5 + Math.cos( i/rows * 2*Math.PI ), 0, Math.sin( i/rows * 2*Math.PI ) ) );
+        for( var i = 0; i <= rows; i++ )   circle_points.push( vec3( scale*(7 + Math.cos( i/rows * 2*Math.PI )), 0, scale*(Math.sin( i/rows * 2*Math.PI )) ) );
 
         Surface_Of_Revolution.prototype.insert_transformed_copy_into( this, [ rows, columns, circle_points ] );
       } }, Shape )
 Declare_Any_Class( "Sphere",      // With lattitude / longitude divisions; this means singularities are at the mesh's top and bottom.  Alternatives exist.
-  { populate: function( rows, columns )
+  { populate: function( rows, columns, size )
       { var circle_points = [];
-        for( var i = 0; i <= rows; i++ )   circle_points.push( vec3( Math.cos( i/rows * Math.PI - Math.PI/2 ), 0, Math.sin( i/rows * Math.PI - Math.PI/2 ) ) );
+        for( var i = 0; i <= rows; i++ )   circle_points.push( vec3( size*Math.cos( i/rows * Math.PI - Math.PI/2 ), 0, size*Math.sin( i/rows * Math.PI - Math.PI/2 ) ) );
 
         Surface_Of_Revolution.prototype.insert_transformed_copy_into( this, [ rows, columns, circle_points ] );
       } }, Shape )
