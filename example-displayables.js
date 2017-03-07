@@ -15,27 +15,40 @@ var gameObjects = [];
 // var leftRot = 0;
 
 var playerlocationx = 0;
+var playerlocationy = 0;
 var maxspeed = 4;
 var xforce = 0;
+var yforce = 0;
 var pixelx = 0;
+var pixely = 0;
 var key_left = false;
 var key_right = false;
+var key_up = false;
+var key_down = false;
 
 window.addEventListener('keydown', handleKeyDown, true)
 window.addEventListener('keyup', handleKeyUp, true)
 
 function handleKeyDown(event){
   if (event.keyCode == 37)
-          key_left = true;
+    key_left = true;
   else if (event.keyCode == 39)
-      key_right = true;
+    key_right = true;
+  else if (event.keyCode == 38)
+    key_up = true;
+  else if (event.keyCode == 40)
+    key_down = true;
 }
 
 function handleKeyUp(event){
   if (event.keyCode == 37)
-      key_left = false;
+    key_left = false;
   else if (event.keyCode == 39)
-      key_right = false;
+    key_right = false;
+  else if (event.keyCode == 38)
+    key_up = false;
+  else if (event.keyCode == 40)
+    key_down = false;
 }
 
 Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayable object that our class Canvas_Manager can manage.  Displays a text user interface.
@@ -152,12 +165,12 @@ Declare_Any_Class( "Example_Camera",     // An example of a displayable object t
         // });
 
         //  TODO: limit camera up/down changes
-        controls.add( "up",  this, function() {
-          this.graphics_state.camera_transform = mult( rotation( 2, -1, 0, 0 ), this.graphics_state.camera_transform );
-        });
-        controls.add( "down",  this, function() {
-          this.graphics_state.camera_transform = mult( rotation( 2, 1, 0, 0 ), this.graphics_state.camera_transform );
-        });
+        // controls.add( "up",  this, function() {
+        //   this.graphics_state.camera_transform = mult( rotation( 2, -1, 0, 0 ), this.graphics_state.camera_transform );
+        // });
+        // controls.add( "down",  this, function() {
+        //   this.graphics_state.camera_transform = mult( rotation( 2, 1, 0, 0 ), this.graphics_state.camera_transform );
+        // });
 
       },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
@@ -312,20 +325,37 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         if (key_right){
             xforce++;
         }
+        if (key_down){
+          yforce--;
+        }
+        if (key_up){
+            yforce++;
+        }
         // handle acceleration
         if (xforce > maxspeed)
             xforce = maxspeed;
         if (xforce < -maxspeed)
             xforce = -maxspeed;
+        if (yforce > maxspeed)
+            yforce = maxspeed;
+        if (yforce < -maxspeed)
+            yforce = -maxspeed;
 
         // abrupt stop
         if (!key_left && !key_right){
            pixelx = 0;
            xforce = 0;
         }
-
         else{
            pixelx += xforce;
+        }
+
+        if (!key_down && !key_up){
+           pixely = 0;
+           yforce = 0;
+        }
+        else{
+          pixely += yforce;
         }
 
         // bounded movement range
@@ -335,7 +365,13 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         if (playerlocationx <= -2500)
           playerlocationx = -2500;
 
-        spaceship_transform = mult(spaceship_transform,  translation(playerlocationx/100, 0, 0, 0 ), spaceship_transform );
+        playerlocationy = playerlocationy + pixely;
+        if (playerlocationy >= 1700)
+          playerlocationy = 1700;
+        if (playerlocationy <= 0)
+          playerlocationy = 0;
+
+        spaceship_transform = mult(spaceship_transform,  translation(playerlocationx/100, playerlocationy/100, 0, 0 ), spaceship_transform );
 
         var prescale = .5;  // control spaceship size
         this.spaceship(spaceship_transform, graphics_state, prescale);  // specify position, etc with model_transform
