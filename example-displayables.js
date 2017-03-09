@@ -5,11 +5,43 @@
 // Now go down to Example_Animation's display() function to see where the sample shapes you see drawn are coded, and a good place to begin filling in your own code.
 
 var spaceship_transform = mat4();
+var smoke_transform = mat4();
 var posOffset = [];
 var gameObjects = [];
 var counter = 1;
-var nodecount =0 ;
+var nodecount = 0;
 var head, tail;
+
+var smokeParticle = [];
+var smokeOriginTransform = mat4();
+var lastTime = 0;
+
+function initSmokeParticles() {
+  smokeParticle = [];
+  var numParticles = 500;
+  for (var i = 0; i < numParticles; i++) {
+    var sx = Math.cos(Math.random() * 2 * Math.PI);
+    var sy = Math.cos(Math.random() * 2 * Math.PI);
+    var sz = Math.cos(Math.random() * 2 * Math.PI);
+    var dx = Math.cos(Math.random() * 2 * Math.PI)/10;
+    var dy = Math.cos(Math.random() * 2 * Math.PI)/10;
+    var dz = Math.cos(Math.random() * 2 * Math.PI)/10;
+    // var t = (Math.random() * 4) + 3;
+    smokeParticle.push({
+      startPosition: [sx, sy, sz],
+      delta: [dx, dy, dz],
+      lifeTime: 4.0
+    });
+  }
+}
+
+initSmokeParticles();
+
+function calculateSmokeOrigin() {
+  smokeOriginTransform = spaceship_transform;
+}
+
+setInterval(calculateSmokeOrigin,2000);
 
 function Node(data) {
     this.data = data;
@@ -226,6 +258,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         shapes_in_use.rounded_closed_cone = new Rounded_Closed_Cone(5, 30);
         shapes_in_use.sphere    = new Subdivision_Sphere( 4 );
 
+        shapes_in_use.square = new Square() // smoke
+
         //for some reason it won't animate by itself, even when it's set to true in tinywebgl
         this.shared_scratchpad.animate   = true;
       },
@@ -242,7 +276,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         user_interface_string_manager.string_map["time"]    = "Animation Time: " + Math.round( this.shared_scratchpad.graphics_state.animation_time )/1000 + "s";
         user_interface_string_manager.string_map["animate"] = "Animation " + (this.shared_scratchpad.animate ? "on" : "off") ;
       },
-      'spaceship': function(model_transform, graphics_state, prescale)  // Build the spaceship
+    'spaceship': function(model_transform, graphics_state, prescale)  // Build the spaceship
       { // MATERIALS, VARIABLES
         var icyGray = new Material( Color(.6, .6, .7, 1), .8, .5, .4, 20 ),
         blueGray = new Material( Color(.5, .6, .7, 1), .8, .5, .4, 20 );
@@ -293,6 +327,65 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         model_transform = mult( model_transform, scale(prescale * 3, prescale * 3, prescale * 3) );
         shapes_in_use.rounded_closed_cone.draw(graphics_state, model_transform, icyGray);
       },
+    'smoke' : function (model_transform, graphics_state, scaleFactor, textureFilePath) {
+        var smokeTexture = new Material(Color(0, 0, 0, 1), .8, .5, .4, 20 , textureFilePath);
+        var default_transform = model_transform;
+        var t = graphics_state.animation_time / 1000;
+
+        var i = 0;
+        while (i < smokeParticle.length) {
+          // if (scaleFactor <= 0)
+          //   smokeParticle[i].lifeTime = 0;
+
+          model_transform = mult(default_transform, translation(smokeParticle[i].startPosition[0], smokeParticle[i].startPosition[1], 5.5));
+          model_transform = mult(model_transform, scale(scaleFactor * 3, scaleFactor * 3, scaleFactor * 3) );
+          shapes_in_use.square.draw(graphics_state, model_transform, smokeTexture);
+
+          smokeParticle[i].startPosition[0] = smokeParticle[i].startPosition[0] + smokeParticle[i].delta[0];  
+          smokeParticle[i].startPosition[1] = smokeParticle[i].startPosition[1] + smokeParticle[i].delta[1];  
+          smokeParticle[i].startPosition[2] = smokeParticle[i].startPosition[2] + smokeParticle[i].delta[2];
+
+          // if (smokeParticle[i].lifeTime == 0) {
+          //   smokeParticle.splice(i, 1);
+          // } else {
+          //   i++;
+          // }
+          i++;
+          
+        }
+        // for (var i = 0; i < smokeParticle.length; i++) {
+        //   // console.log("Particle " + i);
+        //   // console.log(smokeParticle[i].startPosition[0]);
+        //   // console.log(smokeParticle[i].startPosition[1]);
+        //   // console.log(smokeParticle[i].startPosition[2]);
+        //   // console.log(smokeParticle[i].lifeTime);
+          
+        //   // console.log(smokeParticle[i].delta[0]);
+        //   // console.log(smokeParticle[i].delta[1]);
+        //   // console.log(smokeParticle[i].delta[2]);
+        //   // var lt = smokeParticle[i].lifeTime;
+        //   // var scaleFactor = 0.4 * (lt/4.0);
+        //   // if (scaleFactor <= 0) 
+        //   //   scaleFactor = 0;
+
+        //   if (scaleFactor <= 0)
+        //     smokeParticle[i].lifeTime = 0;
+
+        //   model_transform = mult(default_transform, translation(smokeParticle[i].startPosition[0], smokeParticle[i].startPosition[1], 5.5));
+        //   model_transform = mult(model_transform, scale(scaleFactor * 3, scaleFactor * 3, scaleFactor * 3) );
+        //   shapes_in_use.square.draw(graphics_state, model_transform, smokeTexture);
+
+        //   smokeParticle[i].startPosition[0] = smokeParticle[i].startPosition[0] + smokeParticle[i].delta[0];  
+        //   smokeParticle[i].startPosition[1] = smokeParticle[i].startPosition[1] + smokeParticle[i].delta[1];  
+        //   smokeParticle[i].startPosition[2] = smokeParticle[i].startPosition[2] + smokeParticle[i].delta[2];
+        //   // smokeParticle[i].lifeTime = smokeParticle[i].lifeTime - t; 
+          
+        //   // console.log("-----")
+        // }
+
+
+
+      },
     'display': function(time)
       {
         //this.shared_scratchpad.graphics_state.camera_transform = mult( rotation( 8, -1, 0, 0 ), this.shared_scratchpad.graphics_state.camera_transform );
@@ -320,7 +413,6 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
                                                       //ambient, diffuse, specular, specular exponent
 
 
-
         // FIRST: Make the background (giant cube texture mapped with sky)
         var backgroundSky = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/starry-sky.jpg");
         var sky_transform = mult(mat4(), scale(500, 500, 500));
@@ -333,13 +425,13 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           xforce--;
         }
         if (key_right){
-            xforce++;
+          xforce++;
         }
         if (key_down){
           yforce--;
         }
         if (key_up){
-            yforce++;
+          yforce++;
         }
         // handle acceleration
         if (xforce > maxspeed)
@@ -381,11 +473,26 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         if (playerlocationy <= 0)
           playerlocationy = 0;
 
-        spaceship_transform = mult(spaceship_transform,  translation(playerlocationx/100, playerlocationy/100, 0, 0 ), spaceship_transform );
+        spaceship_transform = mult(spaceship_transform, translation(playerlocationx/100, playerlocationy/100, 0, 0 ), spaceship_transform);
+        // smoke_transform = mult(smoke_transform, translation, smoke_transform);
 
         var prescale = .5;  // control spaceship size
         this.spaceship(spaceship_transform, graphics_state, prescale);  // specify position, etc with model_transform
 
+        
+        var smoke_scale = 0.1 * (1 - ((t - lastTime)/2));
+        if (smoke_scale <= 0) {
+          initSmokeParticles();
+          lastTime = t;        
+          calculateSmokeOrigin();  
+        }
+
+
+        // if (smokeOriginTransform != spaceship_transform)        
+
+        this.smoke(smokeOriginTransform, graphics_state, smoke_scale, "images/smoke.gif");
+
+        
         // ************ GAME OBJECTS ********** //
 
         var cube1 = new Material( Color( 1,1,0,1 ), .4, .8, .9, 50 ),
@@ -459,3 +566,5 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
     function getRandomNumber(min, max) {
       return Math.random() * (max - min) + min;
     }
+
+
