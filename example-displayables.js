@@ -450,7 +450,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           var collider = mult(inverse(rocketSphere), model_transform);
           for(var i = 0; i < shape.positions.length; i++) {
             var point = shape.positions[i];
-            var point4 = vec4(point[0],point[1],point[2],0);
+            var point4 = vec4(point[0],point[1],point[2],1);
             var temp = mult_vec(collider, point4);
             var temp2 = vec3(temp[0],temp[1],temp[2]);
             var dist = length(temp2);
