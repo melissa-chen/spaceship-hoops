@@ -5,7 +5,7 @@ index.html - The web page document containing the canvas (drawing surface), that
 
 <head>
   <link rel="shortcut icon" href="">
-  </div>
+
   <meta charset="UTF-8" />
   <!--our own css-->
   <link rel="stylesheet" type="text/css" href="css/style.css">
@@ -25,11 +25,14 @@ index.html - The web page document containing the canvas (drawing surface), that
 
       shaders_in_use["Default"] = new Phong_or_Gouraud_Shader(g_state); // Put all our shader programs in the GPU.
       shaders_in_use["Funny_Shader"] = new Funny_Shader(g_state);
+
       // IMPORTANT: -- You have to include all your new images in here:
-      texture_filenames_to_load.push("text.png"); // Put all our texture images in the GPU.
-      texture_filenames_to_load.push( "images/starry-sky.jpg" );
-      texture_filenames_to_load.push( "images/asteroid.jpg");
+
+      texture_filenames_to_load.push("images/text.png"); // Put all our texture images in the GPU.
+      texture_filenames_to_load.push("images/starry-sky.jpg" );
+      texture_filenames_to_load.push("images/asteroid.jpg");
       texture_filenames_to_load.push("images/smoke.gif");
+      texture_filenames_to_load.push("images/metal-height-map.png");
 
       for (var i = 0; i < texture_filenames_to_load.length; i++) textures_in_use[texture_filenames_to_load[i]] = (new Texture(
         texture_filenames_to_load[i], false));
@@ -63,6 +66,8 @@ index.html - The web page document containing the canvas (drawing surface), that
 <body>
   <span id="score-text">Score: </span>
   <span id="lives-text">Lives: </span>
+  <span id="main-display-text">Hello World!</span>
+  <span id="test">Put text here and it will display it using countdown timer <input id="input"></input></span>
   <canvas id="gl-canvas" width="1200" height="600"></canvas>
 
 </body>

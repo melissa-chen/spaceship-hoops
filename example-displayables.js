@@ -269,10 +269,11 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         user_interface_string_manager.string_map["time"]    = "Animation Time: " + Math.round( this.shared_scratchpad.graphics_state.animation_time )/1000 + "s";
         user_interface_string_manager.string_map["animate"] = "Animation " + (this.shared_scratchpad.animate ? "on" : "off") ;
       },
-    'spaceship': function(model_transform, graphics_state, prescale)  // Build the spaceship
+
+    'spaceship': function(model_transform, graphics_state, prescale, texture)
       { // MATERIALS, VARIABLES
-        var icyGray = new Material( Color(.6, .6, .7, 1), .8, .5, .4, 20 ),
-        blueGray = new Material( Color(.5, .6, .7, 1), .8, .5, .4, 20 );
+        var icyGray = new Material( Color(.6, .6, .7, 1), .5, .2, .1, 20, "images/metal-height-map.png"),
+        blueGray = new Material( Color(.5, .6, .7, 1), .5, .2, .1, 20, "images/metal-height-map.png");
         var bodyCenter;
         var wing;
 
@@ -347,7 +348,6 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           }
         }
 
-
       },
     'display': function(time)
       {
@@ -371,7 +371,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         graphics_state.lights = [];                    // First clear the light list each frame so we can replace & update lights.
 
         var t = graphics_state.animation_time/1000, light_orbit = [ Math.cos(t), Math.sin(t) ];
-        graphics_state.lights.push( new Light( vec4( 0, 2 , 3, 1 ), Color( 1, 1, 1, 1 ), 20 ) );
+        graphics_state.lights.push( new Light( vec4( 5, 5, 40, 1 ), Color( 1, 1, 1, 1 ), 20 ) );
         // graphics_state.lights.push( new Light( vec4( -10*light_orbit[0], -20*light_orbit[1], -14*light_orbit[0], 0 ), Color( 1, 1, .3, 1 ), 100*Math.cos( t/10 ) ) );
 
         // *** Materials: *** Declare new ones as temps when needed; they're just cheap wrappers for some numbers.
@@ -443,6 +443,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         // smoke_transform = mult(smoke_transform, translation, smoke_transform);
 
         var prescale = .5;  // control spaceship size
+
         this.spaceship(spaceship_transform, graphics_state, prescale);  // specify position, etc with model_transform
      
         if (key_left || key_up || key_right || key_down) {
@@ -497,6 +498,13 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           iterator = iterator.next;
         }
 
+        // test for display_text
+        if (!this.shared_scratchpad.game_state.flags["display_text"]) {
+          var text = document.getElementById("input").value;
+          console.log(text);
+          this.shared_scratchpad.game_state.count_down_timer("display_text", 0.1, text);
+        }
+
       }
   }, Animation );
 
@@ -512,18 +520,42 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         this.define_data_members({
           shared_scratchpad: context.shared_scratchpad,
           score: document.getElementById("score-text"),
-          lives: document.getElementById("lives-text")
+          lives: document.getElementById("lives-text"),
+          display_text: document.getElementById("main-display-text")
         });
-        this.shared_scratchpad.game_state = {score_amount: 0, lives_amount: 3};
+        this.shared_scratchpad.game_state = {score_amount: 0, lives_amount: 3, display_text: "hi world"};
+        this.shared_scratchpad.game_state.flags = {"asteroid": true, "ring": true, "display_text": false};
+        this.shared_scratchpad.game_state.flag_timers = {"asteroid": Number.MAX_SAFE_INTEGER, "ring": Number.MAX_SAFE_INTEGER, "display_text": Number.MAX_SAFE_INTEGER};
+        this.shared_scratchpad.game_state.count_down_timer = function(object, count_down_time, text_string = "") {
+          var currTime = new Date();
+          context.shared_scratchpad.game_state.flags[object] ^= 1;
+          currTime.setSeconds(currTime.getSeconds() + count_down_time);
+          context.shared_scratchpad.game_state.flag_timers[object] = currTime;
+          if (text_string != ""){
+            context.shared_scratchpad.game_state.display_text = text_string;
+          }
+        }
+      },
+      'update_timers': function() {
+        for (var flag in this.shared_scratchpad.game_state.flag_timers) {
+          var currTime = new Date();
+          if (this.shared_scratchpad.game_state.flag_timers[flag] < currTime) {
+            this.shared_scratchpad.game_state.flags[flag] ^= 1;
+            this.shared_scratchpad.game_state.flag_timers[flag] = Number.MAX_SAFE_INTEGER;
+          }
+        }
       },
       'display': function (time) {
         this.score.innerHTML = "Score: " + this.shared_scratchpad.game_state.score_amount++;
         this.lives.innerHTML = "Lives: " + this.shared_scratchpad.game_state.lives_amount;
+        this.display_text.innerHTML = this.shared_scratchpad.game_state.display_text;
+        this.update_timers();
       }
     }, Animation);
+
+
 
     function getRandomNumber(min, max) {
       return Math.random() * (max - min) + min;
     }
-
 
