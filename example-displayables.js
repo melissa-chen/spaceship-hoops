@@ -5,7 +5,6 @@
 // Now go down to Example_Animation's display() function to see where the sample shapes you see drawn are coded, and a good place to begin filling in your own code.
 
 var spaceship_transform = mat4();
-var smoke_transform = mat4();
 var posOffset = [];
 var gameObjects = [];
 var counter = 1;
@@ -13,35 +12,27 @@ var nodecount = 0;
 var head, tail;
 
 var smokeParticle = [];
-var smokeOriginTransform = mat4();
-var lastTime = 0;
 
-function initSmokeParticles() {
-  smokeParticle = [];
-  var numParticles = 500;
+function initSmokeParticles(bt, spaceship_transform) {
+  // smokeParticle = [];
+  var numParticles = 10;
   for (var i = 0; i < numParticles; i++) {
     var sx = Math.cos(Math.random() * 2 * Math.PI);
     var sy = Math.cos(Math.random() * 2 * Math.PI);
     var sz = Math.cos(Math.random() * 2 * Math.PI);
-    var dx = Math.cos(Math.random() * 2 * Math.PI)/10;
-    var dy = Math.cos(Math.random() * 2 * Math.PI)/10;
-    var dz = Math.cos(Math.random() * 2 * Math.PI)/10;
-    // var t = (Math.random() * 4) + 3;
+    var dx = Math.cos(Math.random() * 2 * Math.PI)/50;
+    var dy = Math.cos(Math.random() * 2 * Math.PI)/50;
+    var dz = Math.cos(Math.random() * 2 * Math.PI)/50;
+
     smokeParticle.push({
-      startPosition: [sx, sy, sz],
+      startTransform: mult(spaceship_transform, translation(sx, sy, sz+5.5)),
       delta: [dx, dy, dz],
-      lifeTime: 4.0
+      birthTime: bt    
     });
   }
+  console.log("There are " + smokeParticle.length + " smoke particles!");
 }
 
-initSmokeParticles();
-
-function calculateSmokeOrigin() {
-  smokeOriginTransform = spaceship_transform;
-}
-
-setInterval(calculateSmokeOrigin,2000);
 
 function Node(data) {
     this.data = data;
@@ -259,6 +250,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         shapes_in_use.sphere    = new Subdivision_Sphere( 4 );
 
         shapes_in_use.square = new Square() // smoke
+        shapes_in_use.triangle = new Triangle() // smoke ver.2 better?
 
         //for some reason it won't animate by itself, even when it's set to true in tinywebgl
         this.shared_scratchpad.animate   = true;
@@ -327,62 +319,38 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         model_transform = mult( model_transform, scale(prescale * 3, prescale * 3, prescale * 3) );
         shapes_in_use.rounded_closed_cone.draw(graphics_state, model_transform, icyGray);
       },
-    'smoke' : function (model_transform, graphics_state, scaleFactor, textureFilePath) {
-        var smokeTexture = new Material(Color(0, 0, 0, 1), .8, .5, .4, 20 , textureFilePath);
-        var default_transform = model_transform;
-        var t = graphics_state.animation_time / 1000;
-
+    'smoke' : function (time, graphics_state) {
+        var smokeTexture = new Material(Color(0, 0, 0, 0), .3, .9, .9, 20 , "images/smoke.gif");
+        // var smoke_scale = 0.1 * (1 - ((t - lastTime)/2));
+        // if (smoke_scale <= 0) {
+        //   initSmokeParticles(t);
+        //   lastTime = t;        
+        //   calculateSmokeOrigin();  
+        // }
         var i = 0;
         while (i < smokeParticle.length) {
           // if (scaleFactor <= 0)
           //   smokeParticle[i].lifeTime = 0;
 
-          model_transform = mult(default_transform, translation(smokeParticle[i].startPosition[0], smokeParticle[i].startPosition[1], 5.5));
-          model_transform = mult(model_transform, scale(scaleFactor * 3, scaleFactor * 3, scaleFactor * 3) );
+          model_transform = smokeParticle[i].startTransform;
+
+          var smokeScale = 0.1 * (1 - ((time - smokeParticle[i].birthTime)/2));
+          if (smokeScale <= 0) {
+            smokeScale = 0;
+          }
+
+          model_transform = mult(model_transform, scale(smokeScale * 3, smokeScale * 3, smokeScale * 3) );
+          // shapes_in_use.triangle.draw(graphics_state, model_transform, smokeTexture);
           shapes_in_use.square.draw(graphics_state, model_transform, smokeTexture);
 
-          smokeParticle[i].startPosition[0] = smokeParticle[i].startPosition[0] + smokeParticle[i].delta[0];  
-          smokeParticle[i].startPosition[1] = smokeParticle[i].startPosition[1] + smokeParticle[i].delta[1];  
-          smokeParticle[i].startPosition[2] = smokeParticle[i].startPosition[2] + smokeParticle[i].delta[2];
+          smokeParticle[i].startTransform = mult(smokeParticle[i].startTransform, translation(smokeParticle[i].delta[0],smokeParticle[i].delta[1],smokeParticle[i].delta[2]));
 
-          // if (smokeParticle[i].lifeTime == 0) {
-          //   smokeParticle.splice(i, 1);
-          // } else {
-          //   i++;
-          // }
-          i++;
-          
+          if (smokeScale <= 0) {
+            smokeParticle.splice(i,1);
+          } else {
+            i++;
+          }
         }
-        // for (var i = 0; i < smokeParticle.length; i++) {
-        //   // console.log("Particle " + i);
-        //   // console.log(smokeParticle[i].startPosition[0]);
-        //   // console.log(smokeParticle[i].startPosition[1]);
-        //   // console.log(smokeParticle[i].startPosition[2]);
-        //   // console.log(smokeParticle[i].lifeTime);
-          
-        //   // console.log(smokeParticle[i].delta[0]);
-        //   // console.log(smokeParticle[i].delta[1]);
-        //   // console.log(smokeParticle[i].delta[2]);
-        //   // var lt = smokeParticle[i].lifeTime;
-        //   // var scaleFactor = 0.4 * (lt/4.0);
-        //   // if (scaleFactor <= 0) 
-        //   //   scaleFactor = 0;
-
-        //   if (scaleFactor <= 0)
-        //     smokeParticle[i].lifeTime = 0;
-
-        //   model_transform = mult(default_transform, translation(smokeParticle[i].startPosition[0], smokeParticle[i].startPosition[1], 5.5));
-        //   model_transform = mult(model_transform, scale(scaleFactor * 3, scaleFactor * 3, scaleFactor * 3) );
-        //   shapes_in_use.square.draw(graphics_state, model_transform, smokeTexture);
-
-        //   smokeParticle[i].startPosition[0] = smokeParticle[i].startPosition[0] + smokeParticle[i].delta[0];  
-        //   smokeParticle[i].startPosition[1] = smokeParticle[i].startPosition[1] + smokeParticle[i].delta[1];  
-        //   smokeParticle[i].startPosition[2] = smokeParticle[i].startPosition[2] + smokeParticle[i].delta[2];
-        //   // smokeParticle[i].lifeTime = smokeParticle[i].lifeTime - t; 
-          
-        //   // console.log("-----")
-        // }
-
 
 
       },
@@ -392,6 +360,10 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         var graphics_state  = this.shared_scratchpad.graphics_state,
             model_transform = mat4();             // We have to reset model_transform every frame, so that as each begins, our basis starts as the identity.
         shaders_in_use[ "Default" ].activate();
+
+
+        gl.enable(gl.BLEND);
+        // gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 
         counter++;
 
@@ -411,7 +383,6 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
         // Omit the final (string) parameter if you want no texture
                                                       //ambient, diffuse, specular, specular exponent
-
 
         // FIRST: Make the background (giant cube texture mapped with sky)
         var backgroundSky = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/starry-sky.jpg");
@@ -480,19 +451,25 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         this.spaceship(spaceship_transform, graphics_state, prescale);  // specify position, etc with model_transform
 
         
-        var smoke_scale = 0.1 * (1 - ((t - lastTime)/2));
-        if (smoke_scale <= 0) {
-          initSmokeParticles();
-          lastTime = t;        
-          calculateSmokeOrigin();  
-        }
-
+        // var smoke_scale = 0.1 * (1 - ((t - lastTime)/2));
+        // if (smoke_scale <= 0) {
+        //   initSmokeParticles(t);
+        //   lastTime = t;        
+        //   calculateSmokeOrigin();  
+        // }
 
         // if (smokeOriginTransform != spaceship_transform)        
+        if (key_left || key_up || key_right || key_down) {
+          // calculateSmokeOrigin(); 
+          initSmokeParticles(t, spaceship_transform);
+          // 
+        }
 
-        this.smoke(smokeOriginTransform, graphics_state, smoke_scale, "images/smoke.gif");
-
+        this.smoke(t, graphics_state);
         
+        // pruneSmokeParticles();
+
+
         // ************ GAME OBJECTS ********** //
 
         var cube1 = new Material( Color( 1,1,0,1 ), .4, .8, .9, 50 ),
