@@ -145,6 +145,7 @@ Declare_Any_Class( "Phong_or_Gouraud_Shader",
             vec3 normal = N;
             // vec3 normal = normalize(tex_color.rgb * 2.0 - 1.0);
 
+
             gl_FragColor = tex_color * ( USE_TEXTURE ? ambient : 0.0 ) + vec4( shapeColor.xyz * ambient, USE_TEXTURE ? shapeColor.w * tex_color.w : shapeColor.w ) ;
             for( int i = 0; i < N_LIGHTS; i++ )
             {

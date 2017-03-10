@@ -269,7 +269,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         user_interface_string_manager.string_map["time"]    = "Animation Time: " + Math.round( this.shared_scratchpad.graphics_state.animation_time )/1000 + "s";
         user_interface_string_manager.string_map["animate"] = "Animation " + (this.shared_scratchpad.animate ? "on" : "off") ;
       },
-    'spaceship': function(model_transform, graphics_state, prescale)  // Build the spaceship
+
+    'spaceship': function(model_transform, graphics_state, prescale, texture)
       { // MATERIALS, VARIABLES
         var icyGray = new Material( Color(.6, .6, .7, 1), .5, .2, .1, 20, "images/metal-height-map.png"),
         blueGray = new Material( Color(.5, .6, .7, 1), .5, .2, .1, 20, "images/metal-height-map.png");
@@ -442,6 +443,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         // smoke_transform = mult(smoke_transform, translation, smoke_transform);
 
         var prescale = .5;  // control spaceship size
+
         this.spaceship(spaceship_transform, graphics_state, prescale);  // specify position, etc with model_transform
      
         if (key_left || key_up || key_right || key_down) {
@@ -500,7 +502,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         if (!this.shared_scratchpad.game_state.flags["display_text"]) {
           var text = document.getElementById("input").value;
           console.log(text);
-          this.shared_scratchpad.game_state.count_down_timer("display_text", 3, text);
+          this.shared_scratchpad.game_state.count_down_timer("display_text", 0.1, text);
         }
 
       }
@@ -551,8 +553,9 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
       }
     }, Animation);
 
+
+
     function getRandomNumber(min, max) {
       return Math.random() * (max - min) + min;
     }
-
 
