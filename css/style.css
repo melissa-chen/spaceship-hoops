@@ -1,7 +1,7 @@
 canvas {
     position: absolute;
-    top: 0;
-    left: 0;
+    top: 0px;
+    left: 0px;
     z-index: -1;
 }
 
@@ -17,4 +17,18 @@ canvas {
     position: absolute;
     top: 70px;
     left: 10px;
+}
+
+#main-display-text{
+    color: white;
+    position: absolute;
+    font-size: 30px;
+    top: 40px;
+    left: 530px;
+}
+
+/* ================= */
+#test {
+    position: absolute;
+    top: 650px;
 }
