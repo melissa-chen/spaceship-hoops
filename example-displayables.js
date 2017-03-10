@@ -278,8 +278,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
       },
     'spaceship': function(model_transform, graphics_state, prescale)  // Build the spaceship
       { // MATERIALS, VARIABLES
-        var icyGray = new Material( Color(.6, .6, .7, 1), .8, .5, .4, 20 ),
-        blueGray = new Material( Color(.5, .6, .7, 1), .8, .5, .4, 20 );
+        var icyGray = new Material( Color(.6, .6, .7, 1), .5, .2, .1, 20, "images/metal-height-map.png"),
+        blueGray = new Material( Color(.5, .6, .7, 1), .5, .2, .1, 20, "images/metal-height-map.png");
         var bodyCenter;
         var wing;
 
