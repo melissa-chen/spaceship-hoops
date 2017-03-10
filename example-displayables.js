@@ -249,8 +249,9 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         shapes_in_use.rounded_closed_cone = new Rounded_Closed_Cone(5, 30);
         shapes_in_use.sphere    = new Subdivision_Sphere( 4 );
 
-        shapes_in_use.square = new Square() // smoke
-        shapes_in_use.triangle = new Triangle() // smoke ver.2 better?
+        shapes_in_use.square = new Square() // smoke ver. 1 - og square
+        shapes_in_use.triangle = new Triangle() // smoke ver.2 - better?
+        shapes_in_use.smoke = new Sphere(8,5,1); // smoke ver. 3 - or this is better?
 
         //for some reason it won't animate by itself, even when it's set to true in tinywebgl
         this.shared_scratchpad.animate   = true;
@@ -320,18 +321,11 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         shapes_in_use.rounded_closed_cone.draw(graphics_state, model_transform, icyGray);
       },
     'smoke' : function (time, graphics_state) {
-        var smokeTexture = new Material(Color(0, 0, 0, 0), .3, .9, .9, 20 , "images/smoke.gif");
-        // var smoke_scale = 0.1 * (1 - ((t - lastTime)/2));
-        // if (smoke_scale <= 0) {
-        //   initSmokeParticles(t);
-        //   lastTime = t;        
-        //   calculateSmokeOrigin();  
-        // }
+        // var smokeTexture = new Material(Color(0, 0, 0, 0), 1, .1, .2, 50 , "images/smoke.gif");
+        var smokeTexture = new Material ( Color(1, 1, 1, 1), .4, .8, .9, 50, "images/asteroid.jpg");
+
         var i = 0;
         while (i < smokeParticle.length) {
-          // if (scaleFactor <= 0)
-          //   smokeParticle[i].lifeTime = 0;
-
           model_transform = smokeParticle[i].startTransform;
 
           var smokeScale = 0.1 * (1 - ((time - smokeParticle[i].birthTime)/2));
@@ -340,8 +334,9 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           }
 
           model_transform = mult(model_transform, scale(smokeScale * 3, smokeScale * 3, smokeScale * 3) );
-          // shapes_in_use.triangle.draw(graphics_state, model_transform, smokeTexture);
-          shapes_in_use.square.draw(graphics_state, model_transform, smokeTexture);
+          // shapes_in_use.triangle.draw(graphics_state, model_transform, smokeTexture); // ver.1
+          // shapes_in_use.square.draw(graphics_state, model_transform, smokeTexture); // ver.2 
+          shapes_in_use.smoke.draw(graphics_state, model_transform, smokeTexture);
 
           smokeParticle[i].startTransform = mult(smokeParticle[i].startTransform, translation(smokeParticle[i].delta[0],smokeParticle[i].delta[1],smokeParticle[i].delta[2]));
 
@@ -449,26 +444,13 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
         var prescale = .5;  // control spaceship size
         this.spaceship(spaceship_transform, graphics_state, prescale);  // specify position, etc with model_transform
-
-        
-        // var smoke_scale = 0.1 * (1 - ((t - lastTime)/2));
-        // if (smoke_scale <= 0) {
-        //   initSmokeParticles(t);
-        //   lastTime = t;        
-        //   calculateSmokeOrigin();  
-        // }
-
-        // if (smokeOriginTransform != spaceship_transform)        
+     
         if (key_left || key_up || key_right || key_down) {
-          // calculateSmokeOrigin(); 
           initSmokeParticles(t, spaceship_transform);
-          // 
         }
 
         this.smoke(t, graphics_state);
         
-        // pruneSmokeParticles();
-
 
         // ************ GAME OBJECTS ********** //
 
