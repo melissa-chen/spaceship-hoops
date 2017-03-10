@@ -544,13 +544,10 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         this.shared_scratchpad.game_state.flag_timers = {"asteroid": Number.MAX_SAFE_INTEGER, "ring": Number.MAX_SAFE_INTEGER, "display_text": Number.MAX_SAFE_INTEGER};
         this.shared_scratchpad.game_state.count_down_timer = function(object, count_down_time, text_string = "") {
           var currTime = new Date();
-          console.log(currTime);
           context.shared_scratchpad.game_state.flags[object] ^= 1;
           currTime.setSeconds(currTime.getSeconds() + count_down_time);
           context.shared_scratchpad.game_state.flag_timers[object] = currTime;
-          console.log(context.shared_scratchpad.game_state.flag_timers[object]);
           if (text_string != ""){
-            console.log(text_string);
             context.shared_scratchpad.game_state.display_text = text_string;
           }
         }
@@ -559,8 +556,6 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         for (var flag in this.shared_scratchpad.game_state.flag_timers) {
           var currTime = new Date();
           if (this.shared_scratchpad.game_state.flag_timers[flag] < currTime) {
-            console.log(flag);
-            console.log("hi");
             this.shared_scratchpad.game_state.flags[flag] ^= 1;
             this.shared_scratchpad.game_state.flag_timers[flag] = Number.MAX_SAFE_INTEGER;
           }
