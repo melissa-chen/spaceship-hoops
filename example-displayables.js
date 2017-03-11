@@ -16,10 +16,8 @@ var rocketSphere;
 var colliderSphere = 4.2;
 var ringColliderSphere = 1.3;
 var colliderCount = 0;
+var isDead = false;
 var pointBuffer = 0;
-var isRing = false;
-var isAsteroid = false;
-
 var smokeParticle = [];
 
 function initSmokeParticles(bt, spaceship_transform) {
@@ -40,6 +38,7 @@ function initSmokeParticles(bt, spaceship_transform) {
     });
   }
 
+  //console.log("There are " + smokeParticle.length + " smoke particles!");
 }
 
 
@@ -359,7 +358,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         // shapes_in_use.ringCollisionSphere.draw(graphics_state, model_transform, icyGray);
         // model_transform = translation(0, 0, -5);
         // shapes_in_use.collisionDisk.draw(graphics_state, model_transform, icyGray);
-         
+
       },
     'smoke' : function (time, graphics_state) {
         // var smokeTexture = new Material(Color(0, 0, 0, 0), 1, .1, .2, 50 , "images/smoke.gif");
@@ -559,6 +558,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
               var point = shape.positions[i];
               var c = mult_vec(collider, vec4(point[0],point[1],point[2], 1));
               var dist = length(vec3(c[0],c[1],c[2]));
+
               var checker;
               if (! (shape.class_name === "Sphere"))
                 checker = ringColliderSphere;
@@ -574,42 +574,44 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
                     break;
                   }
                   colliderCount++;
+                  if (this.shared_scratchpad.game_state.lives_amount > 0) {
+                    if (shape.class_name === "Sphere") {
+                      this.shared_scratchpad.game_state.lives_amount -= 1;
+                  }
+                  if (this.shared_scratchpad.game_state.lives_amount == 0) {
+                    isDead = true;
+                    console.log("we dead");
+                    break;
+                  }
                   break;
                 }
             }
           }
-          
-          if (colliderCount != 0){
-            colliderCount ++;
-            if (colliderCount == 500)
-              colliderCount = 0;
-          }
+         }
 
-          if (isRing) {
-            this.shared_scratchpad.game_state.score_amount += 100;
-            isRing = false;
-          }
-          if (isAsteroid && this.shared_scratchpad.game_state.flag) {
-            isAsteroid= false;
+         if (colliderCount != 0) {
+
+           colliderCount ++;
+           if (colliderCount == 500)
+             colliderCount = 0;
+         }
+
+          if (isDead) {
+            this.shared_scratchpad.game_state.display_text = "GAME OVER";
+            this.shared_scratchpad.animate = false;
           }
 
           if (!(shape.class_name === "Regular_2D_Polygon"))
-            shape.draw( graphics_state, model_transform, material);
-          iterator = iterator.next;
+              shape.draw( graphics_state, model_transform, material);
+            iterator = iterator.next;
         }
 
-        if(pointBuffer != 0){
+        if (pointBuffer != 0) {
             pointBuffer ++;
             if(pointBuffer == 20)
               pointBuffer = 0;
         }
-
-        // test for display_text
-        if (!this.shared_scratchpad.game_state.flags["display_text"]) {
-          var text = document.getElementById("input").value;
-          this.shared_scratchpad.game_state.count_down_timer("display_text", 0.1, text);
-        }
-      }
+    }
   }, Animation );
 
   /* ==============================
