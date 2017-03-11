@@ -8,7 +8,6 @@ var spaceship_transform = mat4();
 var posOffset = [];
 var gameObjects = [];
 var counter = 1;
-var nodecount = 0;
 var head, tail;
 var ringRate = 220, asteroidRate = 100;
 var ringSpeed = 60.0, asteroidSpeed = 60.0;
@@ -49,9 +48,17 @@ function Node(data) {
 }
 
 function add_object_helper(shape, material, time, position, speed){
+  if (head == null){
+    head = new Node([shape, material, time, position, speed]);
+  }
+  else if (head.next == null){
+    head.next = new Node([shape, material, time, position, speed]);
+    tail = head.next;
+  }
+  else{
     tail.next = new Node([shape, material, time, position, speed]);
     tail = tail.next;
-    nodecount++;
+  }
 }
 
 // Stuff to control spaceship movement
@@ -150,16 +157,6 @@ Declare_Any_Class( "Example_Camera",     // An example of a displayable object t
         this.define_data_members( { graphics_state: context.shared_scratchpad.graphics_state, thrust: vec3(), origin: vec3( 0, 5, 0 ), looking: false } );
 
         this.graphics_state.camera_transform = mult( rotation( 20, 1, 0, 0 ), this.graphics_state.camera_transform );
-
-        //gameobject:(shape, material, animationtime, startpos)
-        head = new Node([shapes_in_use.cube, new Material( Color( 1,1,0,1 ), .4, .8, .9, 50 ), this.graphics_state.animation_time,
-          vec3( -1, 1, -50), 60.0]);
-        nodecount++;
-
-        tail = new Node([shapes_in_use.cube, new Material( Color( 1,0,1,1 ), .4, .8, .9, 50 ), this.graphics_state.animation_time,
-          vec3( 0, 1, -50), 60.0]);
-
-        head.next = tail;
 
         // *** Mouse controls: ***
         this.mouse = { "from_center": vec2() };
