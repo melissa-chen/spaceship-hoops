@@ -33,7 +33,7 @@ function initSmokeParticles(bt, spaceship_transform) {
     smokeParticle.push({
       startTransform: mult(spaceship_transform, translation(sx, sy, sz+5.5)),
       delta: [dx, dy, dz],
-      birthTime: bt    
+      birthTime: bt
     });
   }
   console.log("There are " + smokeParticle.length + " smoke particles!");
@@ -370,7 +370,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
           model_transform = mult(model_transform, scale(smokeScale * 3, smokeScale * 3, smokeScale * 3) );
           // shapes_in_use.triangle.draw(graphics_state, model_transform, smokeTexture); // ver.1
-          // shapes_in_use.square.draw(graphics_state, model_transform, smokeTexture); // ver.2 
+          // shapes_in_use.square.draw(graphics_state, model_transform, smokeTexture); // ver.2
           shapes_in_use.smoke.draw(graphics_state, model_transform, smokeTexture);
 
           smokeParticle[i].startTransform = mult(smokeParticle[i].startTransform, translation(smokeParticle[i].delta[0],smokeParticle[i].delta[1],smokeParticle[i].delta[2]));
@@ -462,30 +462,33 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
         // bounded movement range
         playerlocationx = playerlocationx + pixelx;
-        if (playerlocationx >= 2500)
-          playerlocationx = 2500;
-        if (playerlocationx <= -2500)
-          playerlocationx = -2500;
+        if (playerlocationx >= 20000)
+          playerlocationx = 20000;
+        if (playerlocationx <= -20000)
+          playerlocationx = -20000;
 
         playerlocationy = playerlocationy + pixely;
-        if (playerlocationy >= 1700)
-          playerlocationy = 1700;
-        if (playerlocationy <= 0)
-          playerlocationy = 0;
+        if (playerlocationy >= 20000)
+          playerlocationy = 20000;
+        if (playerlocationy <= -20000)
+          playerlocationy = -20000;
 
-        spaceship_transform = mult(spaceship_transform, translation(playerlocationx/100, playerlocationy/100, 0, 0 ), spaceship_transform);
+        spaceship_transform = mult(spaceship_transform, translation(playerlocationx/100, playerlocationy/100, 0, 0 ));
+        var camera_transform = spaceship_transform;
+        camera_transform = mult(camera_transform, translation(1, 5, 30));
+        this.shared_scratchpad.graphics_state.camera_transform = inverse(camera_transform);
         // smoke_transform = mult(smoke_transform, translation, smoke_transform);
 
         var prescale = .5;  // control spaceship size
 
         this.spaceship(spaceship_transform, graphics_state, prescale);  // specify position, etc with model_transform
-     
+
         if (key_left || key_up || key_right || key_down) {
           initSmokeParticles(t, spaceship_transform);
         }
 
         this.smoke(t, graphics_state);
-        
+
 
         // ************ GAME OBJECTS ********** //
 
@@ -626,4 +629,3 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
     function getRandomNumber(min, max) {
       return Math.random() * (max - min) + min;
     }
-
