@@ -13,9 +13,10 @@ var head, tail;
 var ringRate = 220, asteroidRate = 100;
 var ringSpeed = 60.0, asteroidSpeed = 60.0;
 var rocketSphere;
-var colliderSphere = 5;
+var colliderSphere = 4.2;
+var ringColliderSphere = 1.3;
 var colliderCount = 0;
-var collided = false;
+var pointBuffer = 0;
 var isRing = false;
 var isAsteroid = false;
 
@@ -38,7 +39,7 @@ function initSmokeParticles(bt, spaceship_transform) {
       birthTime: bt
     });
   }
-  console.log("There are " + smokeParticle.length + " smoke particles!");
+
 }
 
 
@@ -251,6 +252,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         shapes_in_use.ring        = new Torus(25, 25, 0.8);
         shapes_in_use.asteroid    = new Sphere(7, 7, 3);
         shapes_in_use.collisionSphere = new Sphere(5, 5, colliderSphere);
+        shapes_in_use.ringCollisionSphere = new Sphere(5, 5, ringColliderSphere);
+        shapes_in_use.collisionDisk = new Regular_2D_Polygon(15, 15, 4.5);
 
 
         shapes_in_use.cylindrical_tube = new Cylindrical_Tube(5, 20);
@@ -352,10 +355,10 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         // collision sphere
         model_transform = bodyCenter;
         rocketSphere = bodyCenter;
-        // if(colliderCount == 0)
-        //   shapes_in_use.collisionSphere.draw(graphics_state, model_transform, icyGray);
-        // else
-        //   shapes_in_use.collisionSphere.draw(graphics_state, model_transform, collidedRed);
+        // shapes_in_use.ringCollisionSphere.draw(graphics_state, model_transform, icyGray);
+        // model_transform = translation(0, 0, -5);
+        // shapes_in_use.collisionDisk.draw(graphics_state, model_transform, icyGray);
+         
       },
     'smoke' : function (time, graphics_state) {
         // var smokeTexture = new Material(Color(0, 0, 0, 0), 1, .1, .2, 50 , "images/smoke.gif");
@@ -493,8 +496,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
         // ************ GAME OBJECTS ********** //
 
-        var cube1 = new Material( Color( 1,1,0,1 ), .4, .8, .9, 50 ),
-            cube2 = new Material( Color( 1,0,1,1 ), .4, .8, .9, 50 ),
+        var ringTexture = new Material( Color( 1,1,0,1 ), .4, .8, .9, 50 ),
+            transparent = new Material( Color(0, 0, 0, 0), 0, 0, 0 , 0)
             asteroidTexture = new Material ( Color(1, 1, 1, 1), .4, .8, .9, 50, "images/asteroid.jpg");
 
 
@@ -502,7 +505,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         var randy = getRandomNumber(-20, 20);
 
         if (counter % ringRate == 0){
-          add_object(shapes_in_use.ring, cube1, vec3(randx, randy, -100), ringSpeed);
+          add_object(shapes_in_use.ring, ringTexture, vec3(randx, randy, -100), ringSpeed);
+          add_object(shapes_in_use.collisionDisk, transparent, vec3(randx, randy, -100), ringSpeed);
         }
         else if (counter % asteroidRate == 0){
 
@@ -543,22 +547,33 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           model_transform = mat4();
           model_transform = mult(translation(pos[0], pos[1], zpos) , model_transform );
 
-          if (colliderCount == 0){
+          if (colliderCount == 0 || shape.class_name === "Regular_2D_Polygon" ){
             //collision detection
             var collider = mult(inverse(rocketSphere), model_transform);
             for(var i = 0; i < shape.positions.length; i++) {
               var point = shape.positions[i];
               var c = mult_vec(collider, vec4(point[0],point[1],point[2], 1));
               var dist = length(vec3(c[0],c[1],c[2]));
-              // console.log(dist);
-                if (dist < colliderSphere){
-                  collided = true;
+              var checker;
+              if (! (shape.class_name === "Sphere"))
+                checker = ringColliderSphere;
+              else
+                checker = colliderSphere;
+
+                if (dist < checker) {
+                  if(shape.class_name === "Regular_2D_Polygon"){
+                    if(pointBuffer == 0){
+                      this.shared_scratchpad.game_state.score_amount += 1000;
+                      pointBuffer++;
+                    }
+                    break;
+                  }
                   colliderCount++;
                   break;
-                  console.log("collided!!!!!");
                 }
             }
           }
+          
           if (colliderCount != 0){
             colliderCount ++;
             if (colliderCount == 500)
@@ -575,14 +590,21 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
             isAsteroid= false;
           }
 
-          shape.draw( graphics_state, model_transform, material);
+          if (!(shape.class_name === "Regular_2D_Polygon"))
+            shape.draw( graphics_state, model_transform, material);
           iterator = iterator.next;
         }
+
+        if(pointBuffer != 0){
+            pointBuffer ++;
+            if(pointBuffer == 20)
+              pointBuffer = 0;
+          }
 
         // test for display_text
         if (!this.shared_scratchpad.game_state.flags["display_text"]) {
           var text = document.getElementById("input").value;
-          console.log(text);
+          //console.log(text);
           this.shared_scratchpad.game_state.count_down_timer("display_text", 0.1, text);
         }
       }
