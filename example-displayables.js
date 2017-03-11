@@ -10,6 +10,12 @@ var gameObjects = [];
 var counter = 1;
 var nodecount = 0;
 var head, tail;
+var ringRate = 220, asteroidRate = 100;
+var ringSpeed = 60.0, asteroidSpeed = 60.0;
+var rocketSphere;
+var colliderSphere = 5;
+var colliderCount = 0;
+var collided = false;
 
 var smokeParticle = [];
 
@@ -39,8 +45,8 @@ function Node(data) {
     this.next = null;
 }
 
-function add_object_helper(shape, material, time, position){
-    tail.next = new Node([shape, material, time, position]);
+function add_object_helper(shape, material, time, position, speed){
+    tail.next = new Node([shape, material, time, position, speed]);
     tail = tail.next;
     nodecount++;
 }
@@ -144,11 +150,11 @@ Declare_Any_Class( "Example_Camera",     // An example of a displayable object t
 
         //gameobject:(shape, material, animationtime, startpos)
         head = new Node([shapes_in_use.cube, new Material( Color( 1,1,0,1 ), .4, .8, .9, 50 ), this.graphics_state.animation_time,
-          vec3( -1, 1, -50)]);
+          vec3( -1, 1, -50), 60.0]);
         nodecount++;
 
         tail = new Node([shapes_in_use.cube, new Material( Color( 1,0,1,1 ), .4, .8, .9, 50 ), this.graphics_state.animation_time,
-          vec3( 0, 1, -50)]);
+          vec3( 0, 1, -50), 60.0]);
 
         head.next = tail;
 
@@ -242,6 +248,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         shapes_in_use.cube        = new Cube();
         shapes_in_use.ring        = new Torus(25, 25, 0.8);
         shapes_in_use.asteroid    = new Sphere(7, 7, 3);
+        shapes_in_use.collisionSphere = new Sphere(5, 5, colliderSphere);
 
 
         shapes_in_use.cylindrical_tube = new Cylindrical_Tube(5, 20);
@@ -274,6 +281,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
       { // MATERIALS, VARIABLES
         var icyGray = new Material( Color(.6, .6, .7, 1), .5, .2, .1, 20, "images/metal-height-map.png"),
         blueGray = new Material( Color(.5, .6, .7, 1), .5, .2, .1, 20, "images/metal-height-map.png");
+        collidedRed = new Material( Color(1, 0, 0, 1), .8, .5, .4, 20 ),
         var bodyCenter;
         var wing;
 
@@ -320,6 +328,14 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         model_transform = mult( model_transform, translation(prescale * 0, prescale * 0, prescale * -7 ) );
         model_transform = mult( model_transform, scale(prescale * 3, prescale * 3, prescale * 3) );
         shapes_in_use.rounded_closed_cone.draw(graphics_state, model_transform, icyGray);
+
+        // collision sphere
+        model_transform = bodyCenter;
+        rocketSphere = bodyCenter;
+        if(colliderCount == 0)
+          shapes_in_use.collisionSphere.draw(graphics_state, model_transform, icyGray);
+        else 
+          shapes_in_use.collisionSphere.draw(graphics_state, model_transform, collidedRed);
       },
     'smoke' : function (time, graphics_state) {
         // var smokeTexture = new Material(Color(0, 0, 0, 0), 1, .1, .2, 50 , "images/smoke.gif");
@@ -362,8 +378,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
         counter++;
 
-        function add_object(shape, material, position) {
-          add_object_helper(shape, material, graphics_state.animation_time, position);
+        function add_object(shape, material, position, speed = 60) {
+          add_object_helper(shape, material, graphics_state.animation_time, position, speed);
         }
 
         // *** Lights: *** Values of vector or point lights over time.  Arguments to construct a Light(): position or vector (homogeneous coordinates), color, size
@@ -461,15 +477,26 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
 
         var randx = getRandomNumber(-50, 50);
-        var randy = getRandomNumber(-20, 20)
+        var randy = getRandomNumber(-20, 20);
 
-        if (counter % 50 == 0){
-          counter = 0;
-          add_object(shapes_in_use.asteroid, asteroidTexture, vec3(randx, randy, -100));
-          randx = getRandomNumber(-50, 50);
-          randy = getRandomNumber(-20, 20)
-          add_object(shapes_in_use.ring, cube1, vec3(randx, randy, -100));
+        if (counter % ringRate == 0){
+          add_object(shapes_in_use.ring, cube1, vec3(randx, randy, -100), ringSpeed);
         }
+        else if (counter % asteroidRate == 0){
+
+          randx = getRandomNumber(-50, 50);
+          randy = getRandomNumber(-20, 20);
+          add_object(shapes_in_use.asteroid, asteroidTexture, vec3(randx, randy, -100), asteroidSpeed);
+        }
+        if (asteroidRate > 20 && counter == 1000){
+          console.log("leveling up");
+          asteroidRate -= 10;
+          asteroidSpeed -= 5;
+          ringSpeed -= 3;
+          ringRate -= 4;
+          counter = 0;
+        }
+
 
         var shape, material, offset, pos, zpos;
         //gameobject:(shape, material, animationtime, startpos)
@@ -478,10 +505,11 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           gameObject = iterator.data;
           pos = gameObject[3];
           offset = gameObject[2];
+          speed = gameObject[4];
 
-          zpos = pos[2] + (graphics_state.animation_time - offset)/60.0;
+          zpos = pos[2] + (graphics_state.animation_time - offset)/speed;
 
-          if (zpos > 0 && iterator == head){
+          if (zpos > 5 && iterator == head){
             nodecount--;
             head = head.next;
             iterator = iterator.next;
@@ -493,6 +521,28 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
           model_transform = mat4();
           model_transform = mult(translation(pos[0], pos[1], zpos) , model_transform );
+
+          if (colliderCount == 0){
+            //collision detection
+            var collider = mult(inverse(rocketSphere), model_transform);
+            for(var i = 0; i < shape.positions.length; i++) {
+              var point = shape.positions[i];
+              var c = mult_vec(collider, vec4(point[0],point[1],point[2], 1));
+              var dist = length(vec3(c[0],c[1],c[2]));
+              // console.log(dist);
+                if (dist < colliderSphere){
+                  collided = true;
+                  colliderCount++;
+                  break;
+                  console.log("collided!!!!!");
+                }
+            }
+          }
+          if (colliderCount != 0){
+            colliderCount ++;
+            if (colliderCount == 500)
+              colliderCount = 0;
+          }
 
           shape.draw( graphics_state, model_transform, material);
           iterator = iterator.next;
