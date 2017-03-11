@@ -624,6 +624,12 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         else {
           // just draw the shapes
         }
+
+        if (!this.shared_scratchpad.game_state.flags["display_text"]) {
+          var text = document.getElementById("input").value;
+          console.log(text);
+          this.shared_scratchpad.game_state.count_down_timer("display_text", 5, text);
+        }
     }
   }, Animation );
 
@@ -665,9 +671,6 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         }
       },
       'display': function (time) {
-        // var deltaTime = Math.abs(new Date() - this.shared_scratchpad.game_state.time);
-        // this.shared_scratchpad.game_state.time = new Date();
-
         this.score.innerHTML = "Score: " + this.shared_scratchpad.game_state.score_amount;
         this.lives.innerHTML = "Lives: " + this.shared_scratchpad.game_state.lives_amount;
         this.display_text.innerHTML = this.shared_scratchpad.game_state.display_text;
