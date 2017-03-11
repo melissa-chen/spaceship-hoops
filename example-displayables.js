@@ -16,6 +16,8 @@ var rocketSphere;
 var colliderSphere = 5;
 var colliderCount = 0;
 var collided = false;
+var isRing = false;
+var isAsteroid = false;
 
 var smokeParticle = [];
 
@@ -361,63 +363,12 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
         var i = 0;
         while (i < smokeParticle.length) {
-<<<<<<< HEAD
-          // if (scaleFactor <= 0)
-          //   smokeParticle[i].lifeTime = 0;
-
-          model_transform = mult(default_transform, translation(smokeParticle[i].startPosition[0], smokeParticle[i].startPosition[1], 5.5));
-          model_transform = mult(model_transform, scale(scaleFactor * 3, scaleFactor * 3, scaleFactor * 3) );
-          shapes_in_use.square.draw(graphics_state, model_transform, smokeTexture);
-
-          smokeParticle[i].startPosition[0] = smokeParticle[i].startPosition[0] + smokeParticle[i].delta[0];
-          smokeParticle[i].startPosition[1] = smokeParticle[i].startPosition[1] + smokeParticle[i].delta[1];
-          smokeParticle[i].startPosition[2] = smokeParticle[i].startPosition[2] + smokeParticle[i].delta[2];
-
-          // if (smokeParticle[i].lifeTime == 0) {
-          //   smokeParticle.splice(i, 1);
-          // } else {
-          //   i++;
-          // }
-          i++;
-
-        }
-        // for (var i = 0; i < smokeParticle.length; i++) {
-        //   // console.log("Particle " + i);
-        //   // console.log(smokeParticle[i].startPosition[0]);
-        //   // console.log(smokeParticle[i].startPosition[1]);
-        //   // console.log(smokeParticle[i].startPosition[2]);
-        //   // console.log(smokeParticle[i].lifeTime);
-
-        //   // console.log(smokeParticle[i].delta[0]);
-        //   // console.log(smokeParticle[i].delta[1]);
-        //   // console.log(smokeParticle[i].delta[2]);
-        //   // var lt = smokeParticle[i].lifeTime;
-        //   // var scaleFactor = 0.4 * (lt/4.0);
-        //   // if (scaleFactor <= 0)
-        //   //   scaleFactor = 0;
-
-        //   if (scaleFactor <= 0)
-        //     smokeParticle[i].lifeTime = 0;
-
-        //   model_transform = mult(default_transform, translation(smokeParticle[i].startPosition[0], smokeParticle[i].startPosition[1], 5.5));
-        //   model_transform = mult(model_transform, scale(scaleFactor * 3, scaleFactor * 3, scaleFactor * 3) );
-        //   shapes_in_use.square.draw(graphics_state, model_transform, smokeTexture);
-
-        //   smokeParticle[i].startPosition[0] = smokeParticle[i].startPosition[0] + smokeParticle[i].delta[0];
-        //   smokeParticle[i].startPosition[1] = smokeParticle[i].startPosition[1] + smokeParticle[i].delta[1];
-        //   smokeParticle[i].startPosition[2] = smokeParticle[i].startPosition[2] + smokeParticle[i].delta[2];
-        //   // smokeParticle[i].lifeTime = smokeParticle[i].lifeTime - t;
-
-        //   // console.log("-----")
-        // }
-=======
           model_transform = smokeParticle[i].startTransform;
 
           var smokeScale = 0.1 * (1 - ((time - smokeParticle[i].birthTime)/2));
           if (smokeScale <= 0) {
             smokeScale = 0;
           }
->>>>>>> 6e92bcbd0c96da5e9e4dee9e08cefc21a8d16107
 
           model_transform = mult(model_transform, scale(smokeScale * 3, smokeScale * 3, smokeScale * 3) );
           // shapes_in_use.triangle.draw(graphics_state, model_transform, smokeTexture); // ver.1
@@ -534,30 +485,12 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
         this.spaceship(spaceship_transform, graphics_state, prescale);  // specify position, etc with model_transform
 
-<<<<<<< HEAD
-
-        var smoke_scale = 0.1 * (1 - ((t - lastTime)/2));
-        if (smoke_scale <= 0) {
-          initSmokeParticles();
-          lastTime = t;
-          calculateSmokeOrigin();
-=======
         if (key_left || key_up || key_right || key_down) {
           initSmokeParticles(t, spaceship_transform);
->>>>>>> 6e92bcbd0c96da5e9e4dee9e08cefc21a8d16107
         }
 
         this.smoke(t, graphics_state);
 
-<<<<<<< HEAD
-        // if (smokeOriginTransform != spaceship_transform)
-
-        this.smoke(smokeOriginTransform, graphics_state, smoke_scale, "images/smoke.gif");
-
-
-=======
-
->>>>>>> 6e92bcbd0c96da5e9e4dee9e08cefc21a8d16107
         // ************ GAME OBJECTS ********** //
 
         var cube1 = new Material( Color( 1,1,0,1 ), .4, .8, .9, 50 ),
@@ -670,12 +603,6 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           lives: document.getElementById("lives-text"),
           display_text: document.getElementById("main-display-text")
         });
-<<<<<<< HEAD
-        this.shared_scratchpad.game_state = {score_amount: 0, lives_amount: 3};
-        // this.shared_scratchpad.game_state.flag = true;
-        // this.shared_scratchpad.game_state.time = new Date();
-        // this.shared_scratchpad.game_state.time_elapsed = 0;
-=======
         this.shared_scratchpad.game_state = {score_amount: 0, lives_amount: 3, display_text: "hi world"};
         this.shared_scratchpad.game_state.flags = {"asteroid": true, "ring": true, "display_text": false};
         this.shared_scratchpad.game_state.flag_timers = {"asteroid": Number.MAX_SAFE_INTEGER, "ring": Number.MAX_SAFE_INTEGER, "display_text": Number.MAX_SAFE_INTEGER};
@@ -697,7 +624,6 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
             this.shared_scratchpad.game_state.flag_timers[flag] = Number.MAX_SAFE_INTEGER;
           }
         }
->>>>>>> 6e92bcbd0c96da5e9e4dee9e08cefc21a8d16107
       },
       'display': function (time) {
         // var deltaTime = Math.abs(new Date() - this.shared_scratchpad.game_state.time);
@@ -705,19 +631,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
         this.score.innerHTML = "Score: " + this.shared_scratchpad.game_state.score_amount++;
         this.lives.innerHTML = "Lives: " + this.shared_scratchpad.game_state.lives_amount;
-<<<<<<< HEAD
-
-        // if (this.shared_scratchpad.game_state.time_elapsed > 3){
-        //   if (!this.shared_scratchpad.game_state.flag){
-        //     this.shared_scratchpad.game_state.flag = true;
-        //   }
-        //   this.shared_scratchpad.game_state.time_elapsed = 0;
-        // }
-        // this.shared_scratchpad.game_state.time_elapsed += deltaTime;
-=======
         this.display_text.innerHTML = this.shared_scratchpad.game_state.display_text;
         this.update_timers();
->>>>>>> 6e92bcbd0c96da5e9e4dee9e08cefc21a8d16107
       }
     }, Animation);
 
