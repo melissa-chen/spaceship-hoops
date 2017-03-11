@@ -387,6 +387,27 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         }
 
       },
+      'draw_shapes': function() {
+        var shape, material, offset, pos, zpos;
+        var iterator = head;
+        var graphics_state  = this.shared_scratchpad.graphics_state;
+        while (iterator != null) {
+          gameObject = iterator.data;
+          pos = gameObject[3];
+          offset = gameObject[2];
+          speed = gameObject[4];
+
+          zpos = pos[2] + (graphics_state.animation_time - offset) / speed;
+
+          shape = gameObject[0];
+          material = gameObject[1];
+          model_transform = mat4();
+          model_transform = mult(translation(pos[0], pos[1], zpos), model_transform);
+          if (!(shape.class_name === "Regular_2D_Polygon"))
+            shape.draw(graphics_state, model_transform, material);
+          iterator = iterator.next;
+        }
+      },
       'create_game_objects': function () {
       // ************ GAME OBJECTS ********** //
       function getRandomNumber(min, max) {
@@ -438,7 +459,6 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         zpos = pos[2] + (graphics_state.animation_time - offset) / speed;
 
         if (zpos > 5 && iterator == head) {
-          nodecount--;
           head = head.next;
           iterator = iterator.next;
           continue;
@@ -619,7 +639,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           this.shared_scratchpad.game_state.score_amount++;
         }
         else {
-          // just draw the shapes
+          this.smoke();
+          this.draw_shapes();
         }
     }
   }, Animation );
