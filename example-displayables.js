@@ -393,7 +393,9 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         //this.shared_scratchpad.graphics_state.camera_transform = mult( rotation( 8, -1, 0, 0 ), this.shared_scratchpad.graphics_state.camera_transform );
         var graphics_state  = this.shared_scratchpad.graphics_state,
             model_transform = mat4();             // We have to reset model_transform every frame, so that as each begins, our basis starts as the identity.
-        shaders_in_use[ "Default" ].activate();
+            
+        // shaders_in_use[ "Default" ].activate();
+        shaders_in_use[ "Bump_Mapping" ].activate();
 
 
         gl.enable(gl.BLEND);
@@ -585,8 +587,6 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
             isRing = false;
           }
           if (isAsteroid && this.shared_scratchpad.game_state.flag) {
-            // this.shared_scratchpad.game_state.flag = false;
-            // this.shared_scratchpad.game_state.lives_amount -= 1;
             isAsteroid= false;
           }
 
@@ -599,12 +599,11 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
             pointBuffer ++;
             if(pointBuffer == 20)
               pointBuffer = 0;
-          }
+        }
 
         // test for display_text
         if (!this.shared_scratchpad.game_state.flags["display_text"]) {
           var text = document.getElementById("input").value;
-          //console.log(text);
           this.shared_scratchpad.game_state.count_down_timer("display_text", 0.1, text);
         }
       }
