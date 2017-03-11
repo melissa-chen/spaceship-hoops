@@ -281,7 +281,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
       { // MATERIALS, VARIABLES
         var icyGray = new Material( Color(.6, .6, .7, 1), .5, .2, .1, 20, "images/metal-height-map.png"),
         blueGray = new Material( Color(.5, .6, .7, 1), .5, .2, .1, 20, "images/metal-height-map.png");
-        collidedRed = new Material( Color(1, 0, 0, 1), .8, .5, .4, 20 ),
+        collidedRed = new Material( Color(1, 0, 0, 1), .8, .5, .4, 20 );
         var bodyCenter;
         var wing;
 
