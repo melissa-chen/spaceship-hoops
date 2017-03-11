@@ -288,14 +288,20 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         // BODY
         bodyCenter = model_transform;
         model_transform = mult( model_transform, scale(prescale * 2.4, prescale * 2.4, prescale * 14));
-        shapes_in_use.capped_cylinder.draw( graphics_state, model_transform, blueGray);
+        if(colliderCount == 0)
+          shapes_in_use.capped_cylinder.draw( graphics_state, model_transform, blueGray);
+        else 
+          shapes_in_use.capped_cylinder.draw( graphics_state, model_transform, collidedRed);
 
         // TIP
         model_transform = bodyCenter;
         model_transform = mult(model_transform, rotation(180, 0, 1, 0));  // place on other side
         model_transform = mult( model_transform, translation( prescale * 0, prescale * 0, prescale * 9.9 ) );
         model_transform = mult( model_transform, scale(prescale * 3, prescale * 3, prescale * 3) );
-        shapes_in_use.rounded_closed_cone.draw(graphics_state, model_transform, icyGray);
+        if (colliderCount == 0)
+          shapes_in_use.rounded_closed_cone.draw(graphics_state, model_transform, icyGray);
+        else 
+          shapes_in_use.rounded_closed_cone.draw(graphics_state, model_transform, collidedRed);
 
         // WINGS
         for (var i = 0; i < 2; i++){
@@ -307,19 +313,28 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
                                                        1 * Math.pow(-1, i), 0, 1, 0,
                                                        0, 0, 0, 1) );
          model_transform = mult(model_transform, scale(prescale * 3, prescale * .5, prescale * 3));
-         shapes_in_use.cube.draw( graphics_state, model_transform, icyGray);
+         if(colliderCount == 0)
+          shapes_in_use.cube.draw( graphics_state, model_transform, icyGray);
+        else 
+          shapes_in_use.cube.draw(graphics_state, model_transform, collidedRed);
 
          // SIDE CYLINDERS
          model_transform = bodyCenter;
          model_transform = mult(model_transform, translation(prescale * 9 * Math.pow(-1, i), prescale * 0, prescale * 3.5));
          model_transform = mult( model_transform, scale(prescale * .8, prescale * .8, prescale * 9) );
+         if (colliderCount == 0)
          shapes_in_use.capped_cylinder.draw( graphics_state, model_transform, blueGray);
+        else 
+          shapes_in_use.capped_cylinder.draw(graphics_state, model_transform, collidedRed);
 
          // SIDE TOP SPHERES
          model_transform = bodyCenter;
          model_transform = mult(model_transform, translation(prescale * 9 * Math.pow(-1, i), prescale * 0, prescale * -1));
          model_transform = mult( model_transform, scale(prescale * .8, prescale * .8, prescale * 1) );
+         if (colliderCount == 0)
          shapes_in_use.sphere.draw( graphics_state, model_transform, icyGray);
+        else 
+          shapes_in_use.sphere.draw(graphics_state, model_transform, collidedRed);
          }
 
         // BUTT
@@ -327,15 +342,18 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         model_transform = mult(model_transform, rotation(180, 0, 1, 0));  // place on other side
         model_transform = mult( model_transform, translation(prescale * 0, prescale * 0, prescale * -7 ) );
         model_transform = mult( model_transform, scale(prescale * 3, prescale * 3, prescale * 3) );
-        shapes_in_use.rounded_closed_cone.draw(graphics_state, model_transform, icyGray);
+        if (colliderCount == 0)
+          shapes_in_use.rounded_closed_cone.draw(graphics_state, model_transform, icyGray);
+        else 
+          shapes_in_use.rounded_closed_cone.draw(graphics_state, model_transform, collidedRed);
 
         // collision sphere
         model_transform = bodyCenter;
         rocketSphere = bodyCenter;
-        if(colliderCount == 0)
-          shapes_in_use.collisionSphere.draw(graphics_state, model_transform, icyGray);
-        else 
-          shapes_in_use.collisionSphere.draw(graphics_state, model_transform, collidedRed);
+        // if(colliderCount == 0)
+        //   shapes_in_use.collisionSphere.draw(graphics_state, model_transform, icyGray);
+        // else 
+        //   shapes_in_use.collisionSphere.draw(graphics_state, model_transform, collidedRed);
       },
     'smoke' : function (time, graphics_state) {
         // var smokeTexture = new Material(Color(0, 0, 0, 0), 1, .1, .2, 50 , "images/smoke.gif");
