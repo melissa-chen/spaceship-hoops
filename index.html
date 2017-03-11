@@ -24,6 +24,11 @@ index.html - The web page document containing the canvas (drawing surface), that
         g_state = main_canvas.shared_scratchpad.graphics_state;
 
       shaders_in_use["Default"] = new Phong_or_Gouraud_Shader(g_state); // Put all our shader programs in the GPU.
+      shaders_in_use["Bump_Mapping"] = new Bump_Mapping(g_state);
+
+      // lets test this out 
+      shaders_in_use["Plasma_Shader"] = new Plasma_Shader(g_state);
+
       shaders_in_use["Funny_Shader"] = new Funny_Shader(g_state);
 
       // IMPORTANT: -- You have to include all your new images in here:
