@@ -132,6 +132,7 @@ Declare_Any_Class( "Phong_or_Gouraud_Shader",
 
           void main()
           {
+
             if( GOURAUD || COLOR_NORMALS )    // Bypass phong lighting if we're only interpolating predefined colors across vertices
             {
               gl_FragColor = VERTEX_COLOR;
@@ -139,12 +140,18 @@ Declare_Any_Class( "Phong_or_Gouraud_Shader",
             }
 
             vec4 tex_color = texture2D( texture, fTexCoord );
+
+            //bump mapping
+            vec3 normal = N;
+            // vec3 normal = normalize(tex_color.rgb * 2.0 - 1.0);
+
+
             gl_FragColor = tex_color * ( USE_TEXTURE ? ambient : 0.0 ) + vec4( shapeColor.xyz * ambient, USE_TEXTURE ? shapeColor.w * tex_color.w : shapeColor.w ) ;
             for( int i = 0; i < N_LIGHTS; i++ )
             {
               float attenuation_multiplier = 1.0 / (1.0 + attenuation_factor[i] * (dist[i] * dist[i]));
-              float diffuse  = max(dot(L[0], N), 0.0);                                                                                 // TODO
-              float specular = pow(max(dot(N, H[0]), 0.0), smoothness);                                                                                 // TODO
+              float diffuse  = max(dot(L[0], normal), 0.0);                                                                                 // TODO
+              float specular = pow(max(dot(normal, H[0]), 0.0), smoothness);                                                                                 // TODO
 
               gl_FragColor.xyz += attenuation_multiplier * (shapeColor.xyz * diffusivity * diffuse  + lightColor[i].xyz * shininess * specular );
             }

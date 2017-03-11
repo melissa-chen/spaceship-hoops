@@ -5,7 +5,7 @@ index.html - The web page document containing the canvas (drawing surface), that
 
 <head>
   <link rel="shortcut icon" href="">
-  </div>
+
   <meta charset="UTF-8" />
   <!--our own css-->
   <link rel="stylesheet" type="text/css" href="css/style.css">
@@ -16,7 +16,6 @@ index.html - The web page document containing the canvas (drawing surface), that
   <script type="text/javascript" src="example-shapes.js"></script>
   <script type="text/javascript" src="surfaces-of-revolution.js"></script>
   <script type="text/javascript" src="example-shaders.js"></script>
-  <script type="text/javascript" src="collision-scenes.js"></script>
   <script type="text/javascript">
     "use strict"
     window.onload = function init() // ********************* OUR WHOLE PROGRAM'S ENTRY POINT *********************
@@ -26,11 +25,14 @@ index.html - The web page document containing the canvas (drawing surface), that
 
       shaders_in_use["Default"] = new Phong_or_Gouraud_Shader(g_state); // Put all our shader programs in the GPU.
       shaders_in_use["Funny_Shader"] = new Funny_Shader(g_state);
+
       // IMPORTANT: -- You have to include all your new images in here:
-      texture_filenames_to_load.push("text.png"); // Put all our texture images in the GPU.
-      texture_filenames_to_load.push( "images/starry-sky.jpg" );
-      texture_filenames_to_load.push( "images/asteroid.jpg");
+
+      texture_filenames_to_load.push("images/text.png"); // Put all our texture images in the GPU.
+      texture_filenames_to_load.push("images/starry-sky.jpg" );
+      texture_filenames_to_load.push("images/asteroid.jpg");
       texture_filenames_to_load.push("images/smoke.gif");
+      texture_filenames_to_load.push("images/metal-height-map.png");
 
       for (var i = 0; i < texture_filenames_to_load.length; i++) textures_in_use[texture_filenames_to_load[i]] = (new Texture(
         texture_filenames_to_load[i], false));
@@ -38,8 +40,6 @@ index.html - The web page document containing the canvas (drawing surface), that
       main_canvas.register_display_object(new Debug_Screen(main_canvas)); // We instantiate some of our custom "Animation" subclasses and register these displayable
       main_canvas.register_display_object(new Example_Animation(main_canvas)); // objects to their master "Canvas_Manager" object -- which OpenGL calls upon every time a
       main_canvas.register_display_object(new Example_Camera(main_canvas)); // draw / keyboard / mouse event happens.
-      // main_canvas.register_display_object( new Ground_Collision_Scene( main_canvas ) );
-      // main_canvas.register_display_object(new Object_Collision_Scene(main_canvas)); // object collision
       main_canvas.register_display_object(new Score_Screen(main_canvas));
 
       main_canvas.render();
@@ -50,7 +50,7 @@ index.html - The web page document containing the canvas (drawing surface), that
         this.currentTime = 0;
         this.play();
       }, false);
-      audio.play();
+      // audio.play();
       }
 
     window.requestAnimFrame = (function () // Use the correct browser's version of requestAnimationFrame() when queue-ing up re-display events.
@@ -67,6 +67,8 @@ index.html - The web page document containing the canvas (drawing surface), that
 <body>
   <span id="score-text">Score: </span>
   <span id="lives-text">Lives: </span>
+  <span id="main-display-text">Hello World!</span>
+  <span id="test">Put text here and it will display it using countdown timer <input id="input"></input></span>
   <canvas id="gl-canvas" width="1200" height="600"></canvas>
 
 </body>
