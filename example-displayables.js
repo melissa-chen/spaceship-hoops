@@ -16,8 +16,7 @@ var rocketSphere;
 var colliderSphere = 5;
 var colliderCount = 0;
 var collided = false;
-var isRing = false;
-var isAsteroid = false;
+var isDead = false;
 
 var smokeParticle = [];
 
@@ -38,7 +37,7 @@ function initSmokeParticles(bt, spaceship_transform) {
       birthTime: bt
     });
   }
-  console.log("There are " + smokeParticle.length + " smoke particles!");
+  //console.log("There are " + smokeParticle.length + " smoke particles!");
 }
 
 
@@ -550,41 +549,43 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
               var point = shape.positions[i];
               var c = mult_vec(collider, vec4(point[0],point[1],point[2], 1));
               var dist = length(vec3(c[0],c[1],c[2]));
-              // console.log(dist);
                 if (dist < colliderSphere){
                   collided = true;
                   colliderCount++;
+                  if (this.shared_scratchpad.game_state.lives_amount > 0) {
+                    if (shape.class_name === "Sphere") {
+                      this.shared_scratchpad.game_state.lives_amount -= 1;
+                  }
+                  if (this.shared_scratchpad.game_state.lives_amount == 0) {
+                    isDead = true;
+                    console.log("we dead");
+                    break;
+                  }
                   break;
-                  console.log("collided!!!!!");
                 }
             }
           }
-          if (colliderCount != 0){
+          if (colliderCount != 0) {
             colliderCount ++;
             if (colliderCount == 500)
               colliderCount = 0;
-          }
-
-          if (isRing) {
-            this.shared_scratchpad.game_state.score_amount += 100;
-            isRing = false;
-          }
-          if (isAsteroid && this.shared_scratchpad.game_state.flag) {
-            // this.shared_scratchpad.game_state.flag = false;
-            // this.shared_scratchpad.game_state.lives_amount -= 1;
-            isAsteroid= false;
           }
 
           shape.draw( graphics_state, model_transform, material);
           iterator = iterator.next;
         }
 
-        // test for display_text
-        if (!this.shared_scratchpad.game_state.flags["display_text"]) {
-          var text = document.getElementById("input").value;
-          console.log(text);
-          this.shared_scratchpad.game_state.count_down_timer("display_text", 0.1, text);
+        if (isDead) {
+          this.shared_scratchpad.game_state.display_text = "GAME OVER";
+          this.shared_scratchpad.animate = false;
         }
+
+        // // test for display_text
+        // if (!this.shared_scratchpad.game_state.flags["display_text"]) {
+        //   var text = document.getElementById("input").value;
+        //   // console.log(text);
+        //   this.shared_scratchpad.game_state.count_down_timer("display_text", 0.1, "hi world");
+        // }
       }
   }, Animation );
 
