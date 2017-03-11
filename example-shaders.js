@@ -49,8 +49,11 @@ Declare_Any_Class( "Phong_or_Gouraud_Shader",
           attribute vec4 vColor;
           attribute vec3 vPosition, vNormal;
           attribute vec2 vTexCoord;
+
           varying vec2 fTexCoord;
           varying vec3 N, E, pos;
+          
+          varying vec3 fPositionCoord;
 
           uniform float ambient, diffusivity, shininess, smoothness, animation_time, attenuation_factor[N_LIGHTS];
           uniform bool GOURAUD, COLOR_NORMALS, COLOR_VERTICES;    // Flags for alternate shading methods
@@ -69,7 +72,9 @@ Declare_Any_Class( "Phong_or_Gouraud_Shader",
 
             vec4 object_space_pos = vec4(vPosition, 1.0);
             gl_Position = projection_camera_model_transform * object_space_pos;
+
             fTexCoord = vTexCoord;
+            fPositionCoord = vPosition;
 
             if( COLOR_NORMALS || COLOR_VERTICES )   // Bypass phong lighting if we're lighting up vertices some other way
             {
@@ -223,3 +228,36 @@ Declare_Any_Class( "Bump_Mapping",
         }`;
     }
 }, Phong_or_Gouraud_Shader );
+
+Declare_Any_Class( "Plasma_Shader",
+  { 'fragment_glsl_code_string': function()
+      { return `
+          precision mediump float;
+          #define PI 3.1415926535897932384626433832795
+
+          uniform float animation_time;
+          uniform bool USE_TEXTURE;
+          varying vec3 fPositionCoord;
+
+          vec2 scale_factor = vec2(1.3, 1.7);
+          float animation_time_seconds = animation_time / 500.0;
+
+          void main()
+          {
+            if( !USE_TEXTURE ) return;    // USE_TEXTURE must be enabled for any shape using this shader; otherwise texture_coords lookup will fail.
+
+            vec2 vertex_xy = fPositionCoord.xy;
+
+            float v = 0.0;
+            vec2 c = (vertex_xy * scale_factor) - scale_factor/200.0;
+            v += sin((c.x+animation_time));
+            v += sin((c.y+animation_time)/200.0);
+            v += sin((c.x+c.y+animation_time)/200.0);
+            c += scale_factor/2.0 * vec2(sin(animation_time/300.0), cos(animation_time/200.0));
+            v += sin(sqrt(c.x*c.x+c.y*c.y+1.0)+animation_time);
+            v = v/2.0;
+            vec3 col = vec3(1.0, sin(PI*v), cos(PI*v));
+            gl_FragColor = vec4(col*.5 + .5, 1);
+          }`;
+      }
+  }, Phong_or_Gouraud_Shader );

@@ -290,6 +290,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         var bodyCenter;
         var wing;
 
+
         // BODY
         bodyCenter = model_transform;
         model_transform = mult( model_transform, scale(prescale * 2.4, prescale * 2.4, prescale * 14));
@@ -393,9 +394,10 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         //this.shared_scratchpad.graphics_state.camera_transform = mult( rotation( 8, -1, 0, 0 ), this.shared_scratchpad.graphics_state.camera_transform );
         var graphics_state  = this.shared_scratchpad.graphics_state,
             model_transform = mat4();             // We have to reset model_transform every frame, so that as each begins, our basis starts as the identity.
-            
+
         // shaders_in_use[ "Default" ].activate();
         shaders_in_use[ "Bump_Mapping" ].activate();
+        // shaders_in_use[ "Plasma_Shader" ].activate();
 
 
         gl.enable(gl.BLEND);
@@ -421,6 +423,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
                                                       //ambient, diffuse, specular, specular exponent
 
         // FIRST: Make the background (giant cube texture mapped with sky)
+
         var backgroundSky = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/starry-sky.jpg");
         var sky_transform = mult(mat4(), scale(500, 500, 500));
         shapes_in_use.cube.draw(graphics_state, sky_transform, backgroundSky);
