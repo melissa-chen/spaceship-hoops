@@ -13,6 +13,9 @@ var head, tail;
 var ringRate = 220, asteroidRate = 100;
 var ringSpeed = 60.0, asteroidSpeed = 60.0;
 var rocketSphere;
+var colliderSphere = 5;
+var colliderCount = 0;
+var collided = false;
 
 function Node(data) {
     this.data = data;
@@ -222,7 +225,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         shapes_in_use.cube        = new Cube();
         shapes_in_use.ring        = new Torus(25, 25, 0.8);
         shapes_in_use.asteroid    = new Sphere(7, 7, 3);
-        shapes_in_use.collisionSphere = new Sphere(7, 7, 5);
+        shapes_in_use.collisionSphere = new Sphere(5, 5, colliderSphere);
 
 
         shapes_in_use.cylindrical_tube = new Cylindrical_Tube(5, 20);
@@ -249,6 +252,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
       'spaceship': function(model_transform, graphics_state, prescale)  // Build the spaceship
       { // MATERIALS, VARIABLES
         var icyGray = new Material( Color(.6, .6, .7, 1), .8, .5, .4, 20 ),
+        collidedRed = new Material( Color(1, 0, 0, 1), .8, .5, .4, 20 ),
         blueGray = new Material( Color(.5, .6, .7, 1), .8, .5, .4, 20 );
         var bodyCenter;
         var wing;
@@ -300,7 +304,10 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         // collision sphere
         model_transform = bodyCenter;
         rocketSphere = bodyCenter;
-        shapes_in_use.collisionSphere.draw(graphics_state, model_transform, icyGray);
+        if(colliderCount == 0)
+          shapes_in_use.collisionSphere.draw(graphics_state, model_transform, icyGray);
+        else 
+          shapes_in_use.collisionSphere.draw(graphics_state, model_transform, collidedRed);
       },
     'display': function(time)
       {
@@ -447,17 +454,27 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
           model_transform = mat4();
           model_transform = mult(translation(pos[0], pos[1], zpos) , model_transform );
-          var collider = mult(inverse(rocketSphere), model_transform);
-          for(var i = 0; i < shape.positions.length; i++) {
-            var point = shape.positions[i];
-            var point4 = vec4(point[0],point[1],point[2], 1);
-            var temp = mult_vec(collider, point4);
-            var temp2 = vec3(temp[0],temp[1],temp[2]);
-            var dist = length(temp2);
-            // console.log(dist);
-              if (dist < 2){
-                console.log("collided!!!!!");
-              }
+
+          if (colliderCount == 0){
+            //collision detection
+            var collider = mult(inverse(rocketSphere), model_transform);
+            for(var i = 0; i < shape.positions.length; i++) {
+              var point = shape.positions[i];
+              var c = mult_vec(collider, vec4(point[0],point[1],point[2], 1));
+              var dist = length(vec3(c[0],c[1],c[2]));
+              // console.log(dist);
+                if (dist < colliderSphere){
+                  collided = true;
+                  colliderCount++;
+                  break;
+                  console.log("collided!!!!!");
+                }
+            }
+          }
+          if (colliderCount != 0){
+            colliderCount ++;
+            if (colliderCount == 500)
+              colliderCount = 0;
           }
 
           shape.draw( graphics_state, model_transform, material);
