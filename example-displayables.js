@@ -775,8 +775,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         yforce = clamp(yforce, -1*maxspeed, maxspeed);
 
         // bounded movement range
-        playerlocationx = clamp(playerlocationx + pixelx, -20000, 20000);
-        playerlocationy = clamp(playerlocationy + pixely, -20000, 20000);
+        playerlocationx = clamp(playerlocationx + pixelx, -40000, 40000);
+        playerlocationy = clamp(playerlocationy + pixely, -40000, 40000);
         // playerlocationx = playerlocationx + pixelx;
         // playerlocationy = playerlocationy + pixely;
 
