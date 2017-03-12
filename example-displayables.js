@@ -19,9 +19,8 @@ var isDead = false;
 var pointBuffer = 0;
 var smokeParticle = [];
 
-function initSmokeParticles(bt, spaceship_transform) {
+function initSmokeParticles(numParticles, bt, spaceship_transform, color) {
   // smokeParticle = [];
-  var numParticles = 2;
   for (var i = 0; i < numParticles; i++) {
     var sx = Math.cos(Math.random() * 2 * Math.PI);
     var sy = Math.cos(Math.random() * 2 * Math.PI);
@@ -32,12 +31,11 @@ function initSmokeParticles(bt, spaceship_transform) {
 
     smokeParticle.push({
       startTransform: mult(spaceship_transform, translation(sx, sy, sz+5.5)),
+      color: color,
       delta: [dx, dy, dz],
       birthTime: bt
     });
   }
-
-  //console.log("There are " + smokeParticle.length + " smoke particles!");
 }
 
 function Node(data) {
@@ -364,9 +362,9 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
       },
     'smoke' : function () {
-        var time = this.shared_scratchpad.graphics_state.animation_time/1000;
         var graphics_state = this.shared_scratchpad.graphics_state;
-        var smokeTexture = new Material(Color(0, 0, 0, 0), 0.2, .1, .2, 50 , "images/smoke.gif");
+        var time = graphics_state.animation_time/1000;
+        var smokeTexture;
         // var smokeTexture = new Material ( Color(1, 1, 1, 1), .4, .8, .9, 50, "images/asteroid.jpg");
 
         var i = 0;
@@ -378,14 +376,21 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
             smokeScale = 0;
           }
 
-          model_transform = mult(model_transform, scale(smokeScale * 3, smokeScale * 3, smokeScale * 3) );
+          model_transform = mult(model_transform, scale(smokeScale * 3, smokeScale * 3, smokeScale * 3));
+          if (smokeParticle[i].color == "grey") {
+            smokeTexture = new Material(Color(0, 0, 0, 0), 0.2, .1, .2, 50 , "images/smoke.gif");
+          } else if (smokeParticle[i].color == "red") {
+            smokeTexture = new Material(Color(1, 0, 0, 1), 0.7, .1, .2, 50);
+          } else if (smokeParticle[i].color == "green") {
+            smokeTexture = new Material(Color(0, 1, 0, 1), 0.7, .1, .2, 50);
+          }
           // shapes_in_use.triangle.draw(graphics_state, model_transform, smokeTexture); // ver.1
           shapes_in_use.square.draw(graphics_state, model_transform, smokeTexture); // ver.2
-          // shapes_in_use.smoke.draw(graphics_state, model_transform, smokeTexture);
+          // shapes_in_use.smoke.draw(graphics_state, model_transform, smokeTexture); // ver.3
 
           smokeParticle[i].startTransform = mult(smokeParticle[i].startTransform, translation(smokeParticle[i].delta[0],smokeParticle[i].delta[1],smokeParticle[i].delta[2]));
 
-          if (smokeScale <= 0) {
+          if (smokeScale <= 0) {  // prune particles that are no longer alive
             smokeParticle.splice(i,1);
           } else {
             i++;
@@ -412,8 +417,10 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         heart_material = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/red.jpg");
         asteroid_material = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/asteroid.jpg");
 
-        var randx = getRandomNumber(-50, 50);
-        var randy = getRandomNumber(-20, 20);
+        // var randx = getRandomNumber(-50, 50);
+        // var randy = getRandomNumber(-20, 20);
+        var randx = getRandomNumber(spaceship_transform[0][3]-50, spaceship_transform[0][3]+50);
+        var randy = getRandomNumber(spaceship_transform[1][3]-20, spaceship_transform[1][3]+20);
 
         if (counter % ringRate == 0) {
           var osc = Math.floor(getRandomNumber(0, 6));
@@ -428,8 +435,10 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           add_object(shapes_in_use.heartobj, heart_material, vec3(randx, randy, -100), ringSpeed, heart_transform); // TODO: HEART INCREASE LIFE +1, RANDOM POSITION
           add_object(shapes_in_use.collisionDisk, transparent, vec3(randx, randy, -100), ringSpeed, mat4(), osc);
         } else if (counter % asteroidRate == 0) {
-          randx = getRandomNumber(-50, 50);
-          randy = getRandomNumber(-20, 20);
+          // randx = getRandomNumber(-50, 50);
+          randx = getRandomNumber(spaceship_transform[0][3]-50, spaceship_transform[0][3]+50);
+          // randy = getRandomNumber(-20, 20);
+          randy = getRandomNumber(spaceship_transform[1][3]-20, spaceship_transform[1][3]+20);
           var asteroid_transform = mult(mat4(), scale(6,6,6));
            add_object(shapes_in_use.asteroidobj, asteroid_material, vec3(randx, randy, -100), asteroidSpeed, asteroid_transform);
           //add_object(shapes_in_use.asteroid, asteroidTexture, vec3(randx, randy, -100), asteroidSpeed);
@@ -444,10 +453,13 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         }
       },
       'collider_activity': function(shape){
+        var t = this.shared_scratchpad.graphics_state.animation_time/1000;
+
         if (shape.class_name === "Regular_2D_Polygon") {
           if (pointBuffer == 0) {
             this.shared_scratchpad.game_state.count_down_timer("display_text", 1.5, "You went through a ring!</br>Points +1000");
             this.shared_scratchpad.game_state.score_amount += 1000;
+            initSmokeParticles(20,t,spaceship_transform,"red");
             var audio = new Audio('sound/Sonic_Ring.mp3');
             audio.play();
             pointBuffer++;
@@ -655,6 +667,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         // bounded movement range
         playerlocationx = clamp(playerlocationx + pixelx, -20000, 20000);
         playerlocationy = clamp(playerlocationy + pixely, -20000, 20000);
+        // playerlocationx = playerlocationx + pixelx;
+        // playerlocationy = playerlocationy + pixely;
 
         // bounded rotation range
         left_right_rotation = clamp(left_right_rotation, -25, 25);
@@ -672,16 +686,14 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         if (!key_left && !key_right){
            pixelx = 0;
            xforce = 0;
-        }
-        else{
+        } else {
            pixelx += xforce;
         }
 
         if (!key_down && !key_up){
            pixely = 0;
            yforce = 0;
-        }
-        else{
+        } else {
           pixely += yforce;
         }
 
@@ -735,7 +747,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
         if (!isDead) {
           this.spaceship_controls();
-          initSmokeParticles(t, spaceship_transform);
+          initSmokeParticles(2, t, spaceship_transform, "grey");
           this.create_game_objects();
           this.shared_scratchpad.game_state.score_amount++;
         }else {
