@@ -357,10 +357,10 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
         // collision sphere
         model_transform = bodyCenter;
-        rocketSphere = bodyCenter;
-        // shapes_in_use.ringCollisionSphere.draw(graphics_state, model_transform, icyGray);
+        rocketSphere = mult(model_transform, scale(.8, 0.2, 1));
+        //shapes_in_use.collisionSphere.draw(graphics_state, rocketSphere, icyGray);
         // model_transform = translation(0, 0, -5);
-        // shapes_in_use.collisionDisk.draw(graphics_state, model_transform, icyGray);
+         shapes_in_use.ringCollisionSphere.draw(graphics_state, model_transform, icyGray);
 
       },
     'smoke' : function () {
@@ -430,7 +430,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         } else if (counter % asteroidRate == 0) {
           randx = getRandomNumber(-50, 50);
           randy = getRandomNumber(-20, 20);
-          var asteroid_transform = mult(mat4(), scale(6,6,6));
+          var asteroidSize = getRandomNumber(3, 10);
+          var asteroid_transform = mult(mat4(), scale(asteroidSize, asteroidSize, asteroidSize));
            add_object(shapes_in_use.asteroidobj, asteroid_material, vec3(randx, randy, -100), asteroidSpeed, asteroid_transform);
           //add_object(shapes_in_use.asteroid, asteroidTexture, vec3(randx, randy, -100), asteroidSpeed);
         }
@@ -488,7 +489,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
             var dist = length(vec3(c[0], c[1], c[2]));
 
             var checker;
-            if (!(shape.class_name === "Shape_From_File"))
+            if (shape.class_name === Regular_2D_Polygon || (shape.class_name === "Shape_From_File" && shape.filename.toString() == "images/ring.obj"))
               checker = ringColliderSphere;
             else
               checker = colliderSphere;
@@ -592,7 +593,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         if (colliderCount != 0) {
 
           colliderCount++;
-          if (colliderCount == 800)
+          if (colliderCount == 1000)
             colliderCount = 0;
         }
 
@@ -615,7 +616,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
       if (pointBuffer != 0) {
         pointBuffer++;
-        if (pointBuffer == 20)
+        if (pointBuffer == 50)
           pointBuffer = 0;
       }
     },
