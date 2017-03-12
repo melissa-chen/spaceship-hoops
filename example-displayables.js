@@ -41,7 +41,6 @@ function initSmokeParticles(bt, spaceship_transform) {
   //console.log("There are " + smokeParticle.length + " smoke particles!");
 }
 
-
 function Node(data) {
     this.data = data;
     this.next = null;
@@ -337,8 +336,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
          model_transform = mult(model_transform, translation(prescale * 9 * Math.pow(-1, i), prescale * 0, prescale * -1));
          model_transform = mult( model_transform, scale(prescale * .8, prescale * .8, prescale * 1) );
          if (colliderCount == 0)
-         shapes_in_use.sphere.draw( graphics_state, model_transform, icyGray);
-        else
+          shapes_in_use.sphere.draw( graphics_state, model_transform, icyGray);
+         else
           shapes_in_use.sphere.draw(graphics_state, model_transform, collidedRed);
          }
 
@@ -397,7 +396,6 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         // shaders_in_use[ "Default" ].activate();
         shaders_in_use[ "Bump_Mapping" ].activate();
         // shaders_in_use[ "Plasma_Shader" ].activate();
-
 
         gl.enable(gl.BLEND);
         // gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
@@ -514,8 +512,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         }
         else if (counter % asteroidRate == 0){
 
-          randx = getRandomNumber(-50, 50);
-          randy = getRandomNumber(-20, 20);
+          randx = getRandomNumber(-80, 80);
+          randy = getRandomNumber(-50, 50);
           add_object(shapes_in_use.asteroid, asteroidTexture, vec3(randx, randy, -100), asteroidSpeed);
         }
         if (asteroidRate > 20 && counter == 1000){
@@ -597,7 +595,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
          }
 
           if (isDead) {
-            this.shared_scratchpad.game_state.display_text = "GAME OVER";
+            this.shared_scratchpad.game_state.display_text = "<p>GAME OVER</p> <p>Press R to restart</p>";
             this.shared_scratchpad.animate = false;
           }
 

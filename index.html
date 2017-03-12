@@ -7,7 +7,9 @@ index.html - The web page document containing the canvas (drawing surface), that
   <link rel="shortcut icon" href="">
 
   <meta charset="UTF-8" />
-  <!--our own css-->
+
+  <!-- CSS -->
+  <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
   <link rel="stylesheet" type="text/css" href="css/style.css">
   <script type="text/javascript" src="MV.js"></script>
   <!--  Javascript "include" files.  Any code in them gets executed as part of the page loading.  //-->
@@ -26,7 +28,7 @@ index.html - The web page document containing the canvas (drawing surface), that
       shaders_in_use["Default"] = new Phong_or_Gouraud_Shader(g_state); // Put all our shader programs in the GPU.
       shaders_in_use["Bump_Mapping"] = new Bump_Mapping(g_state);
 
-      // lets test this out 
+      // lets test this out
       shaders_in_use["Plasma_Shader"] = new Plasma_Shader(g_state);
 
       shaders_in_use["Funny_Shader"] = new Funny_Shader(g_state);
@@ -70,10 +72,12 @@ index.html - The web page document containing the canvas (drawing surface), that
 </head>
 
 <body>
-  <span id="score-text">Score: </span>
-  <span id="lives-text">Lives: </span>
-  <span id="main-display-text">Hello World!</span>
+  <!-- <div id="score-text">Score: </div>
+  <div id="lives-text">Lives: </div> -->
   <span id="test">Put text here and it will display it using countdown timer <input id="input"></input></span>
+  <div id="main-display-text">Hello World!</div>
+  <div id="score-text">Score: </div>
+  <div id="lives-text">Lives: </div>
   <canvas id="gl-canvas" width="1200" height="600"></canvas>
 
 </body>
