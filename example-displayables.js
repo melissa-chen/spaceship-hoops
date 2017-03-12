@@ -281,6 +281,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         shapes_in_use.ringCollisionSphere = new Sphere(5, 5, ringColliderSphere);
         shapes_in_use.collisionDisk = new Regular_2D_Polygon(15, 15, 4.5);
 
+        shapes_in_use.ringobj = new Shape_From_File( "images/ring.obj" );
+        shapes_in_use.heartobj = new Shape_From_File( "images/Heart.obj" );
 
         shapes_in_use.cylindrical_tube = new Cylindrical_Tube(5, 20);
         shapes_in_use.capped_cylinder = new Capped_Cylinder(5, 20);
@@ -461,14 +463,25 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
       var ringTexture = new Material(Color(1, 1, 0, 1), .4, .8, .9, 50),
         transparent = new Material(Color(0, 0, 0, 0), 0, 0, 0, 0)
-      asteroidTexture = new Material(Color(1, 1, 1, 1), .4, .8, .9, 50, "images/asteroid.jpg");
+      asteroidTexture = new Material(Color(1, 1, 1, 1), .4, .8, .9, 50, "images/asteroid.jpg"),
+      ring_material = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/gold.jpg")
+      heart_material = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/red.jpg");
 
       var randx = getRandomNumber(-50, 50);
       var randy = getRandomNumber(-20, 20);
 
       if (counter % ringRate == 0) {
         var osc = 1;
-        add_object(shapes_in_use.ring, ringTexture, vec3(randx, randy, -100), ringSpeed);
+
+        var ring_transform = mult( model_transform, rotation( 90, 0, 1, 0 ) );
+        ring_transform = mult(ring_transform, scale(10, 10, 10));
+
+        var heart_transform = mult( model_transform, rotation( 90, 0, 1, 0 ) );
+        heart_transform = mult(heart_transform, scale(2, 2, 2));
+
+        add_object(shapes_in_use.ringobj, ring_material, vec3(randx, randy, -100), ringSpeed, ring_transform);
+        add_object(shapes_in_use.heartobj, heart_material, vec3(randx, randy, -100), ringSpeed, heart_transform); // TODO: HEART INCREASE LIFE +1, RANDOM POSITION
+        // add_object(shapes_in_use.ring, ringTexture, vec3(randx, randy, -100), ringSpeed);
         add_object(shapes_in_use.collisionDisk, transparent, vec3(randx, randy, -100), ringSpeed);
       } else if (counter % asteroidRate == 0) {
 
@@ -733,3 +746,11 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         this.update_timers();
       }
     }, Animation);
+
+Shape.prototype.normalize_positions = function()
+  { var average_position = vec3(), average_length = 0;
+    for( var i = 0; i < this.positions.length; i++ ) average_position  =  add( average_position, scale_vec( 1/this.positions.length, this.positions[i] ) );
+    for( var i = 0; i < this.positions.length; i++ ) this.positions[i] =  subtract( this.positions[i], average_position );
+    for( var i = 0; i < this.positions.length; i++ ) average_length    += 1/this.positions.length * length( this.positions[i] );
+    for( var i = 0; i < this.positions.length; i++ ) this.positions[i] =  scale_vec( 1/average_length, this.positions[i] );
+  }

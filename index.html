@@ -18,6 +18,7 @@ index.html - The web page document containing the canvas (drawing surface), that
   <script type="text/javascript" src="example-shapes.js"></script>
   <script type="text/javascript" src="surfaces-of-revolution.js"></script>
   <script type="text/javascript" src="example-shaders.js"></script>
+  <script type="text/javascript" src="webgl-obj-loader.js"></script>
   <script type="text/javascript">
     "use strict"
     window.onload = function init() // ********************* OUR WHOLE PROGRAM'S ENTRY POINT *********************
@@ -40,6 +41,8 @@ index.html - The web page document containing the canvas (drawing surface), that
       texture_filenames_to_load.push("images/asteroid.jpg");
       texture_filenames_to_load.push("images/smoke.gif");
       texture_filenames_to_load.push("images/metal-height-map.png");
+      texture_filenames_to_load.push("images/red.jpg");
+      texture_filenames_to_load.push("images/gold.jpg");
 
       for (var i = 0; i < texture_filenames_to_load.length; i++) textures_in_use[texture_filenames_to_load[i]] = (new Texture(
         texture_filenames_to_load[i], false));
