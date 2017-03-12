@@ -457,9 +457,9 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
         if (shape.class_name === "Regular_2D_Polygon") {
           if (pointBuffer == 0) {
-            this.shared_scratchpad.game_state.count_down_timer("display_text", 1.5, "<p class='point-msg'>Points +1000</p>");
+            this.shared_scratchpad.game_state.count_down_timer("display_text", 1.5, "<p class='point-msg'>+1000</p>");
             this.shared_scratchpad.game_state.score_amount += 1000;
-            initSmokeParticles(20,t,spaceship_transform,"red");
+            initSmokeParticles(20,t,spaceship_transform,"green");
             var audio = new Audio('sound/Sonic_Ring.mp3');
             audio.play();
             pointBuffer++;
@@ -471,14 +471,15 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           if (shape.class_name === "Shape_From_File") {
             var image = shape.filename.toString();
             if (image == "images/asteroid27.obj") {
-              this.shared_scratchpad.game_state.count_down_timer("display_text", 1.5, "<p>You hit an asteroid!</p><p class='lose-life-msg'>Lives -1</p>");
+              this.shared_scratchpad.game_state.count_down_timer("display_text", 1.5, "<p class='lose-life-msg'>Lives -1</p>");
               this.shared_scratchpad.game_state.lives_amount -= 1;
+              initSmokeParticles(20,t,spaceship_transform,"red");
               var audio = new Audio('sound/Junk_Crash.mp3');
               audio.play();
             }
             if (image == "images/Heart.obj") {
               if (this.shared_scratchpad.game_state.lives_amount < 3) {
-                this.shared_scratchpad.game_state.count_down_timer("display_text", 1.5, "<p>You got a heart!<p><p class='gain-life-msg'>Lives +1</p>");
+                this.shared_scratchpad.game_state.count_down_timer("display_text", 1.5, "<p class='gain-life-msg'>Lives +1</p>");
                 this.shared_scratchpad.game_state.lives_amount += 1;
                 var heartAudio = new Audio('sound/Mario_Extra_Life.mp3');
                 heartAudio.play();
