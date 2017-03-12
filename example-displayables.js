@@ -502,7 +502,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           console.log(x_displacement);
           console.log(y_displacement);
           console.log("-----");
-          
+
           playerlocationx += (left_right * x_displacement * obj_speed / 120) * 100;
           playerlocationy += (up_down * y_displacement * obj_speed / 120) * 100;
 
@@ -684,7 +684,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         }
 
         if (isDead) {
-          this.shared_scratchpad.game_state.display_text = "GAME OVER</br>Press R restart";
+          this.shared_scratchpad.game_state.display_text = "GAME OVER</br>Press R to restart";
           this.shared_scratchpad.animate = false;
         }
 
@@ -721,25 +721,25 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
           if (key_left){
             left_right_rotation += 1.3;
-            pixelx = (pixelx > 0) ? 0 : pixelx; 
+            pixelx = (pixelx > 0) ? 0 : pixelx;
             xforce = (xforce > 0) ? 0 : xforce;
             xforce--;
           }
           if (key_right){
             left_right_rotation -= 1.3;
-            pixelx = (pixelx < 0) ? 0 : pixelx; 
+            pixelx = (pixelx < 0) ? 0 : pixelx;
             xforce = (xforce < 0) ? 0 : xforce;
             xforce++;
           }
           if (key_down){
             up_down_rotation -= 0.8;
-            pixely = (pixely > 0) ? 0 : pixely; 
+            pixely = (pixely > 0) ? 0 : pixely;
             yforce = (yforce > 0) ? 0 : yforce;
             yforce--;
           }
           if (key_up){
             up_down_rotation += 0.8;
-            pixely = (pixely < 0) ? 0 : pixely; 
+            pixely = (pixely < 0) ? 0 : pixely;
             yforce = (yforce < 0) ? 0 : yforce;
             yforce++;
           }
@@ -780,7 +780,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
         pixelx += xforce;
         pixely += yforce;
-        
+
 
     },
     'display': function(time)
