@@ -21,7 +21,8 @@ index.html - The web page document containing the canvas (drawing surface), that
   <script type="text/javascript" src="webgl-obj-loader.js"></script>
   <script type="text/javascript">
     "use strict"
-    window.onload = function init() // ********************* OUR WHOLE PROGRAM'S ENTRY POINT *********************
+    window.onload = init;
+    function init() // ********************* OUR WHOLE PROGRAM'S ENTRY POINT *********************
     {
       var main_canvas = new Canvas_Manager("gl-canvas", Color(0, 0, 0, 1)), // Make the master canvas manager.  Set your background color here too.
         g_state = main_canvas.shared_scratchpad.graphics_state;
@@ -55,12 +56,12 @@ index.html - The web page document containing the canvas (drawing surface), that
       main_canvas.render();
 
       // PLAY BACKGROUND MUSIC ON LOOP
-      var audio = new Audio('sound/Omega_Sector.mp3');
+      var audio = new Audio('sound/Boswell_Field.mp3');
       audio.addEventListener('ended', function() {
         this.currentTime = 0;
         this.play();
       }, false);
-      // audio.play();
+      audio.play();
       }
 
     window.requestAnimFrame = (function () // Use the correct browser's version of requestAnimationFrame() when queue-ing up re-display events.
@@ -78,11 +79,73 @@ index.html - The web page document containing the canvas (drawing surface), that
   <!-- <div id="score-text">Score: </div>
   <div id="lives-text">Lives: </div> -->
   <span id="test">Put text here and it will display it using countdown timer <input id="input"></input></span>
-  <div id="main-display-text">Hello World!</div>
-  <div id="score-text">Score: </div>
-  <div id="lives-text">Lives: </div>
 
-  <canvas id="gl-canvas" width="1200" height="500"></canvas>
+  <div id="main-display-text"></div>
+  <div id="score-text"> </div>
+  <div id="lives-text"> </div>
+
+  <img id="start-screen" src="images/starter_bg.png" alt="Start" style="width:1200px;height:600px;">
+
+  <img id="instructions-screen" src="images/instructions.png" alt="Instructions" style="width:1200px;height:600px;">
+
+  <canvas id="gl-canvas" width="1200" height="600"></canvas>
+
+  <!-- <div id = "game-title">
+    SPACESHIP HOOPS
+  </div>
+  <div id = "instructions-text">
+    Press SPACEBAR for instructions
+  </div>
+  <div id = "play-text">
+    Press ENTER to play
+  </div> -->
+
+  <script>
+    var instructions_visible = false;
+    setImageVisible('instructions-screen', false);
+
+    function setImageVisible(id, visible) {
+      var img = document.getElementById(id);
+      img.style.visibility = (visible ? 'visible' : 'hidden');
+    }
+
+    var gameInPlay = false;
+    if (gameInPlay == false){
+      window.addEventListener("keydown", function(e) {
+    		switch(e.keyCode) {
+          case 13: // 'Enter' key
+            if (instructions_visible == false) {
+              gameInPlay = true;
+              setImageVisible('start-screen', false);
+              // setImageVisible('play-text', false);
+              // setImageVisible('game-title', false);
+              // setImageVisible('instructions-text', false);
+            }
+            break;
+          case 32: // Space key
+            if (instructions_visible == false && gameInPlay == false) {
+              setImageVisible('instructions-screen', true);
+              // setImageVisible('play-text', false);
+              // setImageVisible('game-title', false);
+              // setImageVisible('instructions-text', false);
+              instructions_visible = true;
+            }
+            else if (instructions_visible == true && gameInPlay == false){
+              setImageVisible('instructions-screen', false);
+              // setImageVisible('play-text', true);
+              // setImageVisible('game-title', true);
+              // setImageVisible('instructions-text', true);
+              instructions_visible = false;
+            }
+            break;
+
+          }
+      });
+    }
+
+  </script>
+
+
 
 
 </body>

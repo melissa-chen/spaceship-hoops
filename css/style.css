@@ -13,11 +13,8 @@ canvas {
     z-index: -100;
 }
 
-.outer-canvas {
-  max-width: 90vw;
-  max-height: 80vh;
-  display: block;
-  margin: auto;
+.canvas {
+  z-index: -1;
 }
 
 #score-text {
@@ -46,6 +43,57 @@ canvas {
     left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
+}
+
+/*#instructions-text {
+  color: white;
+  position: absolute;
+  font-family: 'Press Start 2P', cursive;
+  top: 60%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+#play-text {
+  color: white;
+  position: absolute;
+  font-family: 'Press Start 2P', cursive;
+  top: 70%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+#game-title {
+  color: white;
+  position: absolute;
+  font-size: 40px;
+  font-family: 'Press Start 2P', cursive;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}*/
+
+#start-screen{
+  position:absolute;
+  display: block;
+  margin: auto;
+  /*margin: 0px 3.5%;*/
+  /*z-index: 100;*/
+}
+
+#instructions-screen{
+  position:absolute;
+  display: inline-block;
+  margin: auto;
+  /*margin: 0px 3.5%;*/
+  /*z-index: 100;*/
+}
+
+img {
+  display: block;
 }
 
 .health-container {
