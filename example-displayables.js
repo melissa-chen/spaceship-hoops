@@ -594,18 +594,26 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
         if (key_left){
           left_right_rotation += 1.3;
+          pixelx = (pixelx > 0) ? 0 : pixelx; 
+          xforce = (xforce > 0) ? 0 : xforce;
           xforce--;
         }
         if (key_right){
           left_right_rotation -= 1.3;
+          pixelx = (pixelx < 0) ? 0 : pixelx; 
+          xforce = (xforce < 0) ? 0 : xforce;
           xforce++;
         }
         if (key_down){
           up_down_rotation -= 0.8;
+          pixely = (pixely > 0) ? 0 : pixely; 
+          yforce = (yforce > 0) ? 0 : yforce;
           yforce--;
         }
         if (key_up){
           up_down_rotation += 0.8;
+          pixely = (pixely < 0) ? 0 : pixely; 
+          yforce = (yforce < 0) ? 0 : yforce;
           yforce++;
         }
 
