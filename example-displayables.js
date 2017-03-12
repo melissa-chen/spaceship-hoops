@@ -8,8 +8,10 @@ var spaceship_transform = mat4();
 var counter = 1;
 var head, tail;
 var heartCounter = 0;
+
 var ringRate = 220, asteroidRate = 50, heartRate = 1500;
 var ringSpeed = 50.0, asteroidSpeed = 43.0;
+
 var rocketSphere;
 var colliderSphere = 4.2;
 var ringColliderSphere = 1.3;
@@ -91,6 +93,7 @@ window.addEventListener('keydown', handleKeyDown, true)
 window.addEventListener('keyup', handleKeyUp, true)
 
 function handleKeyDown(event){
+  // console.log(event);
   if (event.keyCode == 37)
     key_left = true;
   else if (event.keyCode == 39)
@@ -99,6 +102,12 @@ function handleKeyDown(event){
     key_up = true;
   else if (event.keyCode == 40)
     key_down = true;
+  else if (event.keyCode == 71) {
+    console.log("God Mode");
+    asteroidRate = 10;
+    asteroidSpeed = 10.0;
+  } // god mode
+    
 }
 
 function handleKeyUp(event){
