@@ -3,6 +3,7 @@ Spaceship Hoops
 
 ```
 Used Google Chrome for browser.
+git tag
 ```
 
 ## Members
@@ -21,7 +22,7 @@ Our game has a spaceship fly through space to go through rings while dodging ast
 
 The point of the game is to go through as many rings as possible and to avoid hitting asteroids. As the player stays alive longer in the game and goes through more rings, the player will get more points. The player will also game a certain number of points every time they fully go through a ring, not just a side of the ring.
 
-At the beginning of the game, the player has three lives. The player will lose a life once they hit an asteroid, and the game will get harder as the player stays alive longer in the game. In order to make the game harder, there will be more asteroids popping up. In addition, the longer the player stays in the game, the rings will start to move to make it harder for the player to go through them.
+At the beginning of the game, the player has three lives. The player will lose a life once they hit an asteroid, and the game will get harder as the player stays alive longer in the game. In order to make the game harder, there will be more asteroids popping up and the rings will start to move to make it harder for the player to go through them.
 
 We will also have hearts that pop up that the player can hit to gain an extra life.
 

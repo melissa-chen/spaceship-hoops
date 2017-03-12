@@ -8,7 +8,6 @@ var spaceship_transform = mat4();
 var posOffset = [];
 var gameObjects = [];
 var counter = 1;
-var nodecount = 0;
 var head, tail;
 var ringRate = 220, asteroidRate = 100;
 var ringSpeed = 60.0, asteroidSpeed = 60.0;
@@ -19,10 +18,11 @@ var colliderCount = 0;
 var isDead = false;
 var pointBuffer = 0;
 var smokeParticle = [];
+var oscType = 0 // 0: still, 1: hor, 2: vert, 3: spiral
 
 function initSmokeParticles(bt, spaceship_transform) {
   // smokeParticle = [];
-  var numParticles = 10;
+  var numParticles = 1;
   for (var i = 0; i < numParticles; i++) {
     var sx = Math.cos(Math.random() * 2 * Math.PI);
     var sy = Math.cos(Math.random() * 2 * Math.PI);
@@ -46,10 +46,18 @@ function Node(data) {
     this.next = null;
 }
 
-function add_object_helper(shape, material, time, position, speed){
-    tail.next = new Node([shape, material, time, position, speed]);
+function add_object_helper(shape, material, time, position, speed, transform, osc){
+  if (head == null){
+    head = new Node([shape, material, time, position, speed, transform, osc]);
+  }
+  else if (head.next == null){
+    head.next = new Node([shape, material, time, position, speed, transform, osc]);
+    tail = head.next;
+  }
+  else{
+    tail.next = new Node([shape, material, time, position, speed, transform, osc]);
     tail = tail.next;
-    nodecount++;
+  }
 }
 
 // Stuff to control spaceship movement
@@ -93,6 +101,36 @@ function handleKeyUp(event){
     key_up = false;
   else if (event.keyCode == 40)
     key_down = false;
+}
+
+function reset_values(){
+  spaceship_transform = mat4();
+  posOffset = [];
+  gameObjects = [];
+  counter = 1;
+  head = null;
+  tail = null;
+  ringRate = 220, asteroidRate = 100;
+  ringSpeed = 60.0, asteroidSpeed = 60.0;
+  rocketSphere;
+  colliderSphere = 4.2;
+  ringColliderSphere = 1.3;
+  colliderCount = 0;
+  isDead = false;
+  pointBuffer = 0;
+  smokeParticle = [];
+
+  playerlocationx = 0;
+  playerlocationy = 0;
+  maxspeed = 4;
+  xforce = 0;
+  yforce = 0;
+  pixelx = 0;
+  pixely = 0;
+  key_left = false;
+  key_right = false;
+  key_up = false;
+  key_down = false;
 }
 
 Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayable object that our class Canvas_Manager can manage.  Displays a text user interface.
@@ -148,16 +186,6 @@ Declare_Any_Class( "Example_Camera",     // An example of a displayable object t
         this.define_data_members( { graphics_state: context.shared_scratchpad.graphics_state, thrust: vec3(), origin: vec3( 0, 5, 0 ), looking: false } );
 
         this.graphics_state.camera_transform = mult( rotation( 20, 1, 0, 0 ), this.graphics_state.camera_transform );
-
-        //gameobject:(shape, material, animationtime, startpos)
-        head = new Node([shapes_in_use.cube, new Material( Color( 1,1,0,1 ), .4, .8, .9, 50 ), this.graphics_state.animation_time,
-          vec3( -1, 1, -50), 60.0]);
-        nodecount++;
-
-        tail = new Node([shapes_in_use.cube, new Material( Color( 1,0,1,1 ), .4, .8, .9, 50 ), this.graphics_state.animation_time,
-          vec3( 0, 1, -50), 60.0]);
-
-        head.next = tail;
 
         // *** Mouse controls: ***
         this.mouse = { "from_center": vec2() };
@@ -271,8 +299,13 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         controls.add( "ALT+g", this, function() { this.shared_scratchpad.graphics_state.gouraud       ^= 1; } );   // Make the keyboard toggle some
         controls.add( "ALT+n", this, function() { this.shared_scratchpad.graphics_state.color_normals ^= 1; } );   // GPU flags on and off.
         controls.add( "ALT+a", this, function() { this.shared_scratchpad.animate                      ^= 1; } );
-        controls.add( "r", this, function() { rotationOffset =  this.shared_scratchpad.graphics_state.animation_time - rotationOffset;
-                                                rotate = !rotate; })
+        controls.add( "r", this, function() {
+          reset_values();
+          this.shared_scratchpad.animate = true;
+          this.shared_scratchpad.game_state.score_amount = 0;
+          this.shared_scratchpad.game_state.lives_amount = 1;
+          this.shared_scratchpad.game_state.display_text = "hi world";
+        })
       },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
@@ -359,7 +392,9 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         // shapes_in_use.collisionDisk.draw(graphics_state, model_transform, icyGray);
 
       },
-    'smoke' : function (time, graphics_state) {
+    'smoke' : function () {
+        var time = this.shared_scratchpad.graphics_state.animation_time/1000;
+        var graphics_state = this.shared_scratchpad.graphics_state;
         // var smokeTexture = new Material(Color(0, 0, 0, 0), 1, .1, .2, 50 , "images/smoke.gif");
         var smokeTexture = new Material ( Color(1, 1, 1, 1), .4, .8, .9, 50, "images/asteroid.jpg");
 
@@ -387,47 +422,154 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         }
 
       },
-    'display': function(time)
-      {
-        //this.shared_scratchpad.graphics_state.camera_transform = mult( rotation( 8, -1, 0, 0 ), this.shared_scratchpad.graphics_state.camera_transform );
-        var graphics_state  = this.shared_scratchpad.graphics_state,
-            model_transform = mat4();             // We have to reset model_transform every frame, so that as each begins, our basis starts as the identity.
+      'draw_shapes': function() {
+        var shape, material, offset, pos, zpos;
+        var iterator = head;
+        var graphics_state  = this.shared_scratchpad.graphics_state;
+        while (iterator != null) {
+          gameObject = iterator.data;
+          pos = gameObject[3];
+          offset = gameObject[2];
+          speed = gameObject[4];
 
-        // shaders_in_use[ "Default" ].activate();
-        shaders_in_use[ "Bump_Mapping" ].activate();
-        // shaders_in_use[ "Plasma_Shader" ].activate();
+          zpos = pos[2] + (graphics_state.animation_time - offset) / speed;
+
+          shape = gameObject[0];
+          material = gameObject[1];
+          model_transform = mat4();
+          model_transform = mult(translation(pos[0], pos[1], zpos), model_transform);
+          if (!(shape.class_name === "Regular_2D_Polygon"))
+            shape.draw(graphics_state, model_transform, material);
+          iterator = iterator.next;
+        }
+      },
+      'create_game_objects': function () {
+      // ************ GAME OBJECTS ********** //
+      function getRandomNumber(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
 
         gl.enable(gl.BLEND);
         // gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 
-        counter++;
+      function add_object(shape, material, position, speed, transform = mat4(), osc = 0) {
+        add_object_helper(shape, material, graphics_state.animation_time, position, speed, transform, osc);
+      }
 
-        function add_object(shape, material, position, speed = 60) {
-          add_object_helper(shape, material, graphics_state.animation_time, position, speed);
+      var graphics_state  = this.shared_scratchpad.graphics_state;
+
+      var ringTexture = new Material(Color(1, 1, 0, 1), .4, .8, .9, 50),
+        transparent = new Material(Color(0, 0, 0, 0), 0, 0, 0, 0)
+      asteroidTexture = new Material(Color(1, 1, 1, 1), .4, .8, .9, 50, "images/asteroid.jpg");
+
+      var randx = getRandomNumber(-50, 50);
+      var randy = getRandomNumber(-20, 20);
+
+      if (counter % ringRate == 0) {
+        var osc = 1;
+        add_object(shapes_in_use.ring, ringTexture, vec3(randx, randy, -100), ringSpeed);
+        add_object(shapes_in_use.collisionDisk, transparent, vec3(randx, randy, -100), ringSpeed);
+      } else if (counter % asteroidRate == 0) {
+
+        randx = getRandomNumber(-50, 50);
+        randy = getRandomNumber(-20, 20);
+        add_object(shapes_in_use.asteroid, asteroidTexture, vec3(randx, randy, -100), asteroidSpeed);
+      }
+      if (asteroidRate > 20 && counter == 1000) {
+        // console.log("leveling up");
+        asteroidRate -= 10;
+        asteroidSpeed -= 5;
+        ringSpeed -= 3;
+        ringRate -= 4;
+        counter = 0;
+      }
+
+
+      var shape, material, offset, pos, zpos;
+      //gameobject:(shape, material, animationtime, startpos)
+      var iterator = head;
+      while (iterator != null) {
+        gameObject = iterator.data;
+        pos = gameObject[3];
+        offset = gameObject[2];
+        speed = gameObject[4];
+
+        zpos = pos[2] + (graphics_state.animation_time - offset) / speed;
+
+        if (zpos > 5 && iterator == head) {
+          head = head.next;
+          iterator = iterator.next;
+          continue;
         }
 
-        // *** Lights: *** Values of vector or point lights over time.  Arguments to construct a Light(): position or vector (homogeneous coordinates), color, size
-        // If you want more than two lights, you're going to need to increase a number in the vertex shader file (index.html).  For some reason this won't work in Firefox.
-        graphics_state.lights = [];                    // First clear the light list each frame so we can replace & update lights.
+        shape = gameObject[0];
+        material = gameObject[1];
+        model_transform = gameObject[5];
+        model_transform = mult(translation(pos[0], pos[1], zpos), model_transform);
 
-        var t = graphics_state.animation_time/1000, light_orbit = [ Math.cos(t), Math.sin(t) ];
-        graphics_state.lights.push( new Light( vec4( 5, 5, 40, 1 ), Color( 1, 1, 1, 1 ), 20 ) );
-        // graphics_state.lights.push( new Light( vec4( -10*light_orbit[0], -20*light_orbit[1], -14*light_orbit[0], 0 ), Color( 1, 1, .3, 1 ), 100*Math.cos( t/10 ) ) );
+        if (colliderCount == 0 || shape.class_name === "Regular_2D_Polygon") {
+          //collision detection
+          var collider = mult(inverse(rocketSphere), model_transform);
+          for (var i = 0; i < shape.positions.length; i++) {
+            var point = shape.positions[i];
+            var c = mult_vec(collider, vec4(point[0], point[1], point[2], 1));
+            var dist = length(vec3(c[0], c[1], c[2]));
 
-        // *** Materials: *** Declare new ones as temps when needed; they're just cheap wrappers for some numbers.
-        // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
-        // Omit the final (string) parameter if you want no texture
-                                                      //ambient, diffuse, specular, specular exponent
+            var checker;
+            if (!(shape.class_name === "Sphere"))
+              checker = ringColliderSphere;
+            else
+              checker = colliderSphere;
 
-        // FIRST: Make the background (giant cube texture mapped with sky)
+            if (dist < checker) {
+              if (shape.class_name === "Regular_2D_Polygon") {
+                if (pointBuffer == 0) {
+                  this.shared_scratchpad.game_state.score_amount += 1000;
+                  pointBuffer++;
+                }
+                break;
+              }
+              colliderCount++;
+              if (this.shared_scratchpad.game_state.lives_amount > 0) {
+                if (shape.class_name === "Sphere") {
+                  this.shared_scratchpad.game_state.lives_amount -= 1;
+                }
+                if (this.shared_scratchpad.game_state.lives_amount == 0) {
+                  isDead = true;
+                  console.log("we dead");
+                  break;
+                }
+                break;
+              }
+            }
+          }
+        }
 
-        var backgroundSky = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/starry-sky.jpg");
-        var sky_transform = mult(mat4(), scale(500, 500, 500));
-        shapes_in_use.cube.draw(graphics_state, sky_transform, backgroundSky);
+        if (colliderCount != 0) {
 
-        // ************ MAKE A SPACESHIP ********** //
-        // CONTROL MOVEMENT
-        spaceship_transform = mat4();
+          colliderCount++;
+          if (colliderCount == 500)
+            colliderCount = 0;
+        }
+
+        if (isDead) {
+          this.shared_scratchpad.game_state.display_text = "GAME OVER";
+          this.shared_scratchpad.animate = false;
+        }
+
+        if (!(shape.class_name === "Regular_2D_Polygon"))
+          shape.draw(graphics_state, model_transform, material);
+        iterator = iterator.next;
+      }
+
+      if (pointBuffer != 0) {
+        pointBuffer++;
+        if (pointBuffer == 20)
+          pointBuffer = 0;
+      }
+    },
+    'spaceship_controls': function() {
         if (key_left){
           xforce--;
         }
@@ -479,135 +621,70 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           playerlocationy = 20000;
         if (playerlocationy <= -20000)
           playerlocationy = -20000;
+    },
+    'display': function(time)
+      {
+        //this.shared_scratchpad.graphics_state.camera_transform = mult( rotation( 8, -1, 0, 0 ), this.shared_scratchpad.graphics_state.camera_transform );
+        var graphics_state  = this.shared_scratchpad.graphics_state,
+            model_transform = mat4();             // We have to reset model_transform every frame, so that as each begins, our basis starts as the identity.
 
+        // shaders_in_use[ "Default" ].activate();
+        shaders_in_use[ "Bump_Mapping" ].activate();
+        // shaders_in_use[ "Plasma_Shader" ].activate();
+
+        gl.enable(gl.BLEND);
+        // gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+
+        counter++;
+
+        // *** Lights: *** Values of vector or point lights over time.  Arguments to construct a Light(): position or vector (homogeneous coordinates), color, size
+        // If you want more than two lights, you're going to need to increase a number in the vertex shader file (index.html).  For some reason this won't work in Firefox.
+        graphics_state.lights = [];                    // First clear the light list each frame so we can replace & update lights.
+
+        var t = graphics_state.animation_time/1000, light_orbit = [ Math.cos(t), Math.sin(t) ];
+        graphics_state.lights.push( new Light( vec4( 5, 5, 40, 1 ), Color( 1, 1, 1, 1 ), 20 ) );
+        // graphics_state.lights.push( new Light( vec4( -10*light_orbit[0], -20*light_orbit[1], -14*light_orbit[0], 0 ), Color( 1, 1, .3, 1 ), 100*Math.cos( t/10 ) ) );
+
+        // *** Materials: *** Declare new ones as temps when needed; they're just cheap wrappers for some numbers.
+        // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
+        // Omit the final (string) parameter if you want no texture
+                                                      //ambient, diffuse, specular, specular exponent
+
+        // FIRST: Make the background (giant cube texture mapped with sky)
+        var backgroundSky = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/starry-sky.jpg");
+        var sky_transform = mult(mat4(), scale(500, 500, 500));
+        shapes_in_use.cube.draw(graphics_state, sky_transform, backgroundSky);
+
+        // ************ MAKE A SPACESHIP ********** //
+        spaceship_transform = mat4();
         spaceship_transform = mult(spaceship_transform, translation(playerlocationx/100, playerlocationy/100, 0, 0 ));
         var camera_transform = spaceship_transform;
         camera_transform = mult(camera_transform, translation(1, 5, 30));
         this.shared_scratchpad.graphics_state.camera_transform = inverse(camera_transform);
         // smoke_transform = mult(smoke_transform, translation, smoke_transform);
 
-        var prescale = .5;  // control spaceship size
-
+        var prescale = .35;  // control spaceship size
         this.spaceship(spaceship_transform, graphics_state, prescale);  // specify position, etc with model_transform
 
-        if (key_left || key_up || key_right || key_down) {
-          initSmokeParticles(t, spaceship_transform);
-        }
 
-        this.smoke(t, graphics_state);
-
-        // ************ GAME OBJECTS ********** //
-
-        var ringTexture = new Material( Color( 1,1,0,1 ), .4, .8, .9, 50 ),
-            transparent = new Material( Color(0, 0, 0, 0), 0, 0, 0 , 0)
-            asteroidTexture = new Material ( Color(1, 1, 1, 1), .4, .8, .9, 50, "images/asteroid.jpg");
-
-
-        var randx = getRandomNumber(-50, 50);
-        var randy = getRandomNumber(-20, 20);
-
-        if (counter % ringRate == 0){
-          add_object(shapes_in_use.ring, ringTexture, vec3(randx, randy, -100), ringSpeed);
-          add_object(shapes_in_use.collisionDisk, transparent, vec3(randx, randy, -100), ringSpeed);
-        }
-        else if (counter % asteroidRate == 0){
-
-          randx = getRandomNumber(-80, 80);
-          randy = getRandomNumber(-50, 50);
-          add_object(shapes_in_use.asteroid, asteroidTexture, vec3(randx, randy, -100), asteroidSpeed);
-        }
-        if (asteroidRate > 20 && counter == 1000){
-          // console.log("leveling up");
-          asteroidRate -= 10;
-          asteroidSpeed -= 5;
-          ringSpeed -= 3;
-          ringRate -= 4;
-          counter = 0;
-        }
-
-
-        var shape, material, offset, pos, zpos;
-        //gameobject:(shape, material, animationtime, startpos)
-        var iterator = head;
-        while(iterator != null){
-          gameObject = iterator.data;
-          pos = gameObject[3];
-          offset = gameObject[2];
-          speed = gameObject[4];
-
-          zpos = pos[2] + (graphics_state.animation_time - offset)/speed;
-
-          if (zpos > 5 && iterator == head){
-            nodecount--;
-            head = head.next;
-            iterator = iterator.next;
-            continue;
+        if (!isDead) {
+          this.spaceship_controls();
+          if (key_left || key_up || key_right || key_down) {
+            initSmokeParticles(t, spaceship_transform);
           }
-
-          shape = gameObject[0];
-          material = gameObject[1];
-          model_transform = mat4();
-          model_transform = mult(translation(pos[0], pos[1], zpos) , model_transform );
-
-          if (colliderCount == 0 || shape.class_name === "Regular_2D_Polygon" ){
-            //collision detection
-            var collider = mult(inverse(rocketSphere), model_transform);
-            for(var i = 0; i < shape.positions.length; i++) {
-              var point = shape.positions[i];
-              var c = mult_vec(collider, vec4(point[0],point[1],point[2], 1));
-              var dist = length(vec3(c[0],c[1],c[2]));
-
-              var checker;
-              if (! (shape.class_name === "Sphere"))
-                checker = ringColliderSphere;
-              else
-                checker = colliderSphere;
-
-                if (dist < checker) {
-                  if(shape.class_name === "Regular_2D_Polygon"){
-                    if(pointBuffer == 0){
-                      this.shared_scratchpad.game_state.score_amount += 1000;
-                      pointBuffer++;
-                    }
-                    break;
-                  }
-                  colliderCount++;
-                  if (this.shared_scratchpad.game_state.lives_amount > 0) {
-                    if (shape.class_name === "Sphere") {
-                      this.shared_scratchpad.game_state.lives_amount -= 1;
-                  }
-                  if (this.shared_scratchpad.game_state.lives_amount == 0) {
-                    isDead = true;
-                    console.log("we dead");
-                    break;
-                  }
-                  break;
-                }
-            }
-          }
-         }
-
-         if (colliderCount != 0) {
-
-           colliderCount ++;
-           if (colliderCount == 500)
-             colliderCount = 0;
-         }
-
-          if (isDead) {
-            this.shared_scratchpad.game_state.display_text = "<p>GAME OVER</p> <p>Press R to restart</p>";
-            this.shared_scratchpad.animate = false;
-          }
-
-          if (!(shape.class_name === "Regular_2D_Polygon"))
-              shape.draw( graphics_state, model_transform, material);
-            iterator = iterator.next;
+          this.smoke();
+          this.create_game_objects();
+          this.shared_scratchpad.game_state.score_amount++;
+        }
+        else {
+          this.smoke();
+          this.draw_shapes();
         }
 
-        if (pointBuffer != 0) {
-            pointBuffer ++;
-            if(pointBuffer == 20)
-              pointBuffer = 0;
+        if (!this.shared_scratchpad.game_state.flags["display_text"]) {
+          var text = document.getElementById("input").value;
+          console.log(text);
+          this.shared_scratchpad.game_state.count_down_timer("display_text", 5, text);
         }
     }
   }, Animation );
@@ -627,7 +704,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           lives: document.getElementById("lives-text"),
           display_text: document.getElementById("main-display-text")
         });
-        this.shared_scratchpad.game_state = {score_amount: 0, lives_amount: 3, display_text: "hi world"};
+        this.shared_scratchpad.game_state = {score_amount: 0, lives_amount: 1, display_text: "hi world"};
         this.shared_scratchpad.game_state.flags = {"asteroid": true, "ring": true, "display_text": false};
         this.shared_scratchpad.game_state.flag_timers = {"asteroid": Number.MAX_SAFE_INTEGER, "ring": Number.MAX_SAFE_INTEGER, "display_text": Number.MAX_SAFE_INTEGER};
         this.shared_scratchpad.game_state.count_down_timer = function(object, count_down_time, text_string = "") {
@@ -650,18 +727,9 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         }
       },
       'display': function (time) {
-        // var deltaTime = Math.abs(new Date() - this.shared_scratchpad.game_state.time);
-        // this.shared_scratchpad.game_state.time = new Date();
-
-        this.score.innerHTML = "Score: " + this.shared_scratchpad.game_state.score_amount++;
+        this.score.innerHTML = "Score: " + this.shared_scratchpad.game_state.score_amount;
         this.lives.innerHTML = "Lives: " + this.shared_scratchpad.game_state.lives_amount;
         this.display_text.innerHTML = this.shared_scratchpad.game_state.display_text;
         this.update_timers();
       }
     }, Animation);
-
-
-
-    function getRandomNumber(min, max) {
-      return Math.random() * (max - min) + min;
-    }
