@@ -30,13 +30,13 @@ Declare_Any_Class( "Surface_Of_Revolution",
       }
   }, Shape )                                           //***************************** MORE SHAPES, THAT EXPLOIT THE ABOVE SHAPE TO CONSTRUCT THEMSELVES: *************
 Declare_Any_Class( "Regular_2D_Polygon",  // Approximates a flat disk / circle
-  { populate: function( rows, columns )
-      { Surface_Of_Revolution.prototype.insert_transformed_copy_into( this, [ rows, columns, [ vec3( 0, 0, 0 ), vec3( 1, 0, 0 ) ] ] );
+  { populate: function( rows, columns, scale = 1 )
+      { Surface_Of_Revolution.prototype.insert_transformed_copy_into( this, [ rows, columns, [ vec3(0, 0, 0 ), vec3(scale * 1, 0, 0 ) ] ] );
         for( let t in this.texture_coords ) { this.texture_coords[t][0] = this.positions[t][0]/2 + 0.5; this.texture_coords[t][1] = this.positions[t][1]/2 + 0.5; }
       } }, Shape )
 
 Declare_Any_Class( "Cylindrical_Tube",    // An open tube shape with equally sized sections, pointing down Z locally.
-  { populate : function( rows, columns )
+  { populate : function( rows, columns)
       { Surface_Of_Revolution.prototype.insert_transformed_copy_into( this, [ rows, columns, [ vec3( 1, 0, .5 ), vec3( 1, 0, -.5 ) ] ] ); } }, Shape )
 
 Declare_Any_Class( "Cone_Tip",            // Note:  Curves that touch the Z axis degenerate from squares into triangles as they sweep around

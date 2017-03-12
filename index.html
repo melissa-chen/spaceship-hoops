@@ -7,7 +7,9 @@ index.html - The web page document containing the canvas (drawing surface), that
   <link rel="shortcut icon" href="">
 
   <meta charset="UTF-8" />
-  <!--our own css-->
+
+  <!-- CSS -->
+  <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
   <link rel="stylesheet" type="text/css" href="css/style.css">
   <script type="text/javascript" src="MV.js"></script>
   <!--  Javascript "include" files.  Any code in them gets executed as part of the page loading.  //-->
@@ -16,6 +18,7 @@ index.html - The web page document containing the canvas (drawing surface), that
   <script type="text/javascript" src="example-shapes.js"></script>
   <script type="text/javascript" src="surfaces-of-revolution.js"></script>
   <script type="text/javascript" src="example-shaders.js"></script>
+  <script type="text/javascript" src="webgl-obj-loader.js"></script>
   <script type="text/javascript">
     "use strict"
     window.onload = function init() // ********************* OUR WHOLE PROGRAM'S ENTRY POINT *********************
@@ -24,6 +27,11 @@ index.html - The web page document containing the canvas (drawing surface), that
         g_state = main_canvas.shared_scratchpad.graphics_state;
 
       shaders_in_use["Default"] = new Phong_or_Gouraud_Shader(g_state); // Put all our shader programs in the GPU.
+      shaders_in_use["Bump_Mapping"] = new Bump_Mapping(g_state);
+
+      // lets test this out
+      shaders_in_use["Plasma_Shader"] = new Plasma_Shader(g_state);
+
       shaders_in_use["Funny_Shader"] = new Funny_Shader(g_state);
 
       // IMPORTANT: -- You have to include all your new images in here:
@@ -33,6 +41,8 @@ index.html - The web page document containing the canvas (drawing surface), that
       texture_filenames_to_load.push("images/asteroid.jpg");
       texture_filenames_to_load.push("images/smoke.gif");
       texture_filenames_to_load.push("images/metal-height-map.png");
+      texture_filenames_to_load.push("images/red.jpg");
+      texture_filenames_to_load.push("images/gold.jpg");
 
       for (var i = 0; i < texture_filenames_to_load.length; i++) textures_in_use[texture_filenames_to_load[i]] = (new Texture(
         texture_filenames_to_load[i], false));
@@ -41,6 +51,7 @@ index.html - The web page document containing the canvas (drawing surface), that
       main_canvas.register_display_object(new Example_Animation(main_canvas)); // objects to their master "Canvas_Manager" object -- which OpenGL calls upon every time a
       main_canvas.register_display_object(new Example_Camera(main_canvas)); // draw / keyboard / mouse event happens.
       main_canvas.register_display_object(new Score_Screen(main_canvas));
+
       main_canvas.render();
 
       // PLAY BACKGROUND MUSIC ON LOOP
@@ -64,10 +75,12 @@ index.html - The web page document containing the canvas (drawing surface), that
 </head>
 
 <body>
-  <span id="score-text">Score: </span>
-  <span id="lives-text">Lives: </span>
-  <span id="main-display-text">Hello World!</span>
+  <!-- <div id="score-text">Score: </div>
+  <div id="lives-text">Lives: </div> -->
   <span id="test">Put text here and it will display it using countdown timer <input id="input"></input></span>
+  <div id="main-display-text">Hello World!</div>
+  <div id="score-text">Score: </div>
+  <div id="lives-text">Lives: </div>
   <canvas id="gl-canvas" width="1200" height="600"></canvas>
 
 </body>

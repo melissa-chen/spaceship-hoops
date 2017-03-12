@@ -8,14 +8,21 @@ var spaceship_transform = mat4();
 var posOffset = [];
 var gameObjects = [];
 var counter = 1;
-var nodecount = 0;
 var head, tail;
-
+var ringRate = 220, asteroidRate = 100;
+var ringSpeed = 60.0, asteroidSpeed = 60.0;
+var rocketSphere;
+var colliderSphere = 4.2;
+var ringColliderSphere = 1.3;
+var colliderCount = 0;
+var isDead = false;
+var pointBuffer = 0;
 var smokeParticle = [];
+var oscType = 0 // 0: still, 1: hor, 2: vert, 3: spiral
 
 function initSmokeParticles(bt, spaceship_transform) {
   // smokeParticle = [];
-  var numParticles = 10;
+  var numParticles = 5;
   for (var i = 0; i < numParticles; i++) {
     var sx = Math.cos(Math.random() * 2 * Math.PI);
     var sy = Math.cos(Math.random() * 2 * Math.PI);
@@ -27,22 +34,30 @@ function initSmokeParticles(bt, spaceship_transform) {
     smokeParticle.push({
       startTransform: mult(spaceship_transform, translation(sx, sy, sz+5.5)),
       delta: [dx, dy, dz],
-      birthTime: bt    
+      birthTime: bt
     });
   }
-  console.log("There are " + smokeParticle.length + " smoke particles!");
-}
 
+  //console.log("There are " + smokeParticle.length + " smoke particles!");
+}
 
 function Node(data) {
     this.data = data;
     this.next = null;
 }
 
-function add_object_helper(shape, material, time, position){
-    tail.next = new Node([shape, material, time, position]);
+function add_object_helper(shape, material, time, position, speed, transform, osc){
+  if (head == null){
+    head = new Node([shape, material, time, position, speed, transform, osc]);
+  }
+  else if (head.next == null){
+    head.next = new Node([shape, material, time, position, speed, transform, osc]);
+    tail = head.next;
+  }
+  else{
+    tail.next = new Node([shape, material, time, position, speed, transform, osc]);
     tail = tail.next;
-    nodecount++;
+  }
 }
 
 // Stuff to control spaceship movement
@@ -86,6 +101,36 @@ function handleKeyUp(event){
     key_up = false;
   else if (event.keyCode == 40)
     key_down = false;
+}
+
+function reset_values(){
+  spaceship_transform = mat4();
+  posOffset = [];
+  gameObjects = [];
+  counter = 1;
+  head = null;
+  tail = null;
+  ringRate = 220, asteroidRate = 100;
+  ringSpeed = 60.0, asteroidSpeed = 60.0;
+  rocketSphere;
+  colliderSphere = 4.2;
+  ringColliderSphere = 1.3;
+  colliderCount = 0;
+  isDead = false;
+  pointBuffer = 0;
+  smokeParticle = [];
+
+  playerlocationx = 0;
+  playerlocationy = 0;
+  maxspeed = 4;
+  xforce = 0;
+  yforce = 0;
+  pixelx = 0;
+  pixely = 0;
+  key_left = false;
+  key_right = false;
+  key_up = false;
+  key_down = false;
 }
 
 Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayable object that our class Canvas_Manager can manage.  Displays a text user interface.
@@ -141,16 +186,6 @@ Declare_Any_Class( "Example_Camera",     // An example of a displayable object t
         this.define_data_members( { graphics_state: context.shared_scratchpad.graphics_state, thrust: vec3(), origin: vec3( 0, 5, 0 ), looking: false } );
 
         this.graphics_state.camera_transform = mult( rotation( 20, 1, 0, 0 ), this.graphics_state.camera_transform );
-
-        //gameobject:(shape, material, animationtime, startpos)
-        head = new Node([shapes_in_use.cube, new Material( Color( 1,1,0,1 ), .4, .8, .9, 50 ), this.graphics_state.animation_time,
-          vec3( -1, 1, -50)]);
-        nodecount++;
-
-        tail = new Node([shapes_in_use.cube, new Material( Color( 1,0,1,1 ), .4, .8, .9, 50 ), this.graphics_state.animation_time,
-          vec3( 0, 1, -50)]);
-
-        head.next = tail;
 
         // *** Mouse controls: ***
         this.mouse = { "from_center": vec2() };
@@ -242,7 +277,12 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         shapes_in_use.cube        = new Cube();
         shapes_in_use.ring        = new Torus(25, 25, 0.8);
         shapes_in_use.asteroid    = new Sphere(7, 7, 3);
+        shapes_in_use.collisionSphere = new Sphere(5, 5, colliderSphere);
+        shapes_in_use.ringCollisionSphere = new Sphere(5, 5, ringColliderSphere);
+        shapes_in_use.collisionDisk = new Regular_2D_Polygon(15, 15, 4.5);
 
+        shapes_in_use.ringobj = new Shape_From_File( "images/ring.obj" );
+        shapes_in_use.heartobj = new Shape_From_File( "images/Heart.obj" );
 
         shapes_in_use.cylindrical_tube = new Cylindrical_Tube(5, 20);
         shapes_in_use.capped_cylinder = new Capped_Cylinder(5, 20);
@@ -261,8 +301,13 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         controls.add( "ALT+g", this, function() { this.shared_scratchpad.graphics_state.gouraud       ^= 1; } );   // Make the keyboard toggle some
         controls.add( "ALT+n", this, function() { this.shared_scratchpad.graphics_state.color_normals ^= 1; } );   // GPU flags on and off.
         controls.add( "ALT+a", this, function() { this.shared_scratchpad.animate                      ^= 1; } );
-        controls.add( "r", this, function() { rotationOffset =  this.shared_scratchpad.graphics_state.animation_time - rotationOffset;
-                                                rotate = !rotate; })
+        controls.add( "r", this, function() {
+          reset_values();
+          this.shared_scratchpad.animate = true;
+          this.shared_scratchpad.game_state.score_amount = 0;
+          this.shared_scratchpad.game_state.lives_amount = 1;
+          this.shared_scratchpad.game_state.display_text = "hi world";
+        })
       },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
@@ -274,20 +319,28 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
       { // MATERIALS, VARIABLES
         var icyGray = new Material( Color(.6, .6, .7, 1), .5, .2, .1, 20, "images/metal-height-map.png"),
         blueGray = new Material( Color(.5, .6, .7, 1), .5, .2, .1, 20, "images/metal-height-map.png");
+        collidedRed = new Material( Color(1, 0, 0, 1), .8, .5, .4, 20 );
         var bodyCenter;
         var wing;
+
 
         // BODY
         bodyCenter = model_transform;
         model_transform = mult( model_transform, scale(prescale * 2.4, prescale * 2.4, prescale * 14));
-        shapes_in_use.capped_cylinder.draw( graphics_state, model_transform, blueGray);
+        if(colliderCount == 0)
+          shapes_in_use.capped_cylinder.draw( graphics_state, model_transform, blueGray);
+        else
+          shapes_in_use.capped_cylinder.draw( graphics_state, model_transform, collidedRed);
 
         // TIP
         model_transform = bodyCenter;
         model_transform = mult(model_transform, rotation(180, 0, 1, 0));  // place on other side
         model_transform = mult( model_transform, translation( prescale * 0, prescale * 0, prescale * 9.9 ) );
         model_transform = mult( model_transform, scale(prescale * 3, prescale * 3, prescale * 3) );
-        shapes_in_use.rounded_closed_cone.draw(graphics_state, model_transform, icyGray);
+        if (colliderCount == 0)
+          shapes_in_use.rounded_closed_cone.draw(graphics_state, model_transform, icyGray);
+        else
+          shapes_in_use.rounded_closed_cone.draw(graphics_state, model_transform, collidedRed);
 
         // WINGS
         for (var i = 0; i < 2; i++){
@@ -299,19 +352,28 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
                                                        1 * Math.pow(-1, i), 0, 1, 0,
                                                        0, 0, 0, 1) );
          model_transform = mult(model_transform, scale(prescale * 3, prescale * .5, prescale * 3));
-         shapes_in_use.cube.draw( graphics_state, model_transform, icyGray);
+         if(colliderCount == 0)
+          shapes_in_use.cube.draw( graphics_state, model_transform, icyGray);
+        else
+          shapes_in_use.cube.draw(graphics_state, model_transform, collidedRed);
 
          // SIDE CYLINDERS
          model_transform = bodyCenter;
          model_transform = mult(model_transform, translation(prescale * 9 * Math.pow(-1, i), prescale * 0, prescale * 3.5));
          model_transform = mult( model_transform, scale(prescale * .8, prescale * .8, prescale * 9) );
+         if (colliderCount == 0)
          shapes_in_use.capped_cylinder.draw( graphics_state, model_transform, blueGray);
+        else
+          shapes_in_use.capped_cylinder.draw(graphics_state, model_transform, collidedRed);
 
          // SIDE TOP SPHERES
          model_transform = bodyCenter;
          model_transform = mult(model_transform, translation(prescale * 9 * Math.pow(-1, i), prescale * 0, prescale * -1));
          model_transform = mult( model_transform, scale(prescale * .8, prescale * .8, prescale * 1) );
-         shapes_in_use.sphere.draw( graphics_state, model_transform, icyGray);
+         if (colliderCount == 0)
+          shapes_in_use.sphere.draw( graphics_state, model_transform, icyGray);
+         else
+          shapes_in_use.sphere.draw(graphics_state, model_transform, collidedRed);
          }
 
         // BUTT
@@ -319,11 +381,24 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         model_transform = mult(model_transform, rotation(180, 0, 1, 0));  // place on other side
         model_transform = mult( model_transform, translation(prescale * 0, prescale * 0, prescale * -7 ) );
         model_transform = mult( model_transform, scale(prescale * 3, prescale * 3, prescale * 3) );
-        shapes_in_use.rounded_closed_cone.draw(graphics_state, model_transform, icyGray);
+        if (colliderCount == 0)
+          shapes_in_use.rounded_closed_cone.draw(graphics_state, model_transform, icyGray);
+        else
+          shapes_in_use.rounded_closed_cone.draw(graphics_state, model_transform, collidedRed);
+
+        // collision sphere
+        model_transform = bodyCenter;
+        rocketSphere = bodyCenter;
+        // shapes_in_use.ringCollisionSphere.draw(graphics_state, model_transform, icyGray);
+        // model_transform = translation(0, 0, -5);
+        // shapes_in_use.collisionDisk.draw(graphics_state, model_transform, icyGray);
+
       },
-    'smoke' : function (time, graphics_state) {
-        // var smokeTexture = new Material(Color(0, 0, 0, 0), 1, .1, .2, 50 , "images/smoke.gif");
-        var smokeTexture = new Material ( Color(1, 1, 1, 1), .4, .8, .9, 50, "images/asteroid.jpg");
+    'smoke' : function () {
+        var time = this.shared_scratchpad.graphics_state.animation_time/1000;
+        var graphics_state = this.shared_scratchpad.graphics_state;
+        var smokeTexture = new Material(Color(0, 0, 0, 0), 0.2, .1, .2, 50 , "images/smoke.gif");
+        // var smokeTexture = new Material ( Color(1, 1, 1, 1), .4, .8, .9, 50, "images/asteroid.jpg");
 
         var i = 0;
         while (i < smokeParticle.length) {
@@ -336,8 +411,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
           model_transform = mult(model_transform, scale(smokeScale * 3, smokeScale * 3, smokeScale * 3) );
           // shapes_in_use.triangle.draw(graphics_state, model_transform, smokeTexture); // ver.1
-          // shapes_in_use.square.draw(graphics_state, model_transform, smokeTexture); // ver.2 
-          shapes_in_use.smoke.draw(graphics_state, model_transform, smokeTexture);
+          shapes_in_use.square.draw(graphics_state, model_transform, smokeTexture); // ver.2
+          // shapes_in_use.smoke.draw(graphics_state, model_transform, smokeTexture);
 
           smokeParticle[i].startTransform = mult(smokeParticle[i].startTransform, translation(smokeParticle[i].delta[0],smokeParticle[i].delta[1],smokeParticle[i].delta[2]));
 
@@ -349,44 +424,165 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         }
 
       },
-    'display': function(time)
-      {
-        //this.shared_scratchpad.graphics_state.camera_transform = mult( rotation( 8, -1, 0, 0 ), this.shared_scratchpad.graphics_state.camera_transform );
-        var graphics_state  = this.shared_scratchpad.graphics_state,
-            model_transform = mat4();             // We have to reset model_transform every frame, so that as each begins, our basis starts as the identity.
-        shaders_in_use[ "Default" ].activate();
+      'draw_shapes': function() {
+        var shape, material, offset, pos, zpos;
+        var iterator = head;
+        var graphics_state  = this.shared_scratchpad.graphics_state;
+        while (iterator != null) {
+          gameObject = iterator.data;
+          pos = gameObject[3];
+          offset = gameObject[2];
+          speed = gameObject[4];
+
+          zpos = pos[2] + (graphics_state.animation_time - offset) / speed;
+
+          shape = gameObject[0];
+          material = gameObject[1];
+          model_transform = mat4();
+          model_transform = mult(translation(pos[0], pos[1], zpos), model_transform);
+          if (!(shape.class_name === "Regular_2D_Polygon"))
+            shape.draw(graphics_state, model_transform, material);
+          iterator = iterator.next;
+        }
+      },
+      'create_game_objects': function () {
+      // ************ GAME OBJECTS ********** //
+      function getRandomNumber(min, max) {
+        return Math.random() * (max - min) + min;
+      }
 
 
         gl.enable(gl.BLEND);
         // gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 
-        counter++;
+      function add_object(shape, material, position, speed, transform = mat4(), osc = 0) {
+        add_object_helper(shape, material, graphics_state.animation_time, position, speed, transform, osc);
+      }
 
-        function add_object(shape, material, position) {
-          add_object_helper(shape, material, graphics_state.animation_time, position);
+      var graphics_state  = this.shared_scratchpad.graphics_state;
+
+      var ringTexture = new Material(Color(1, 1, 0, 1), .4, .8, .9, 50),
+        transparent = new Material(Color(0, 0, 0, 0), 0, 0, 0, 0)
+      asteroidTexture = new Material(Color(1, 1, 1, 1), .4, .8, .9, 50, "images/asteroid.jpg"),
+      ring_material = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/gold.jpg")
+      heart_material = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/red.jpg");
+
+      var randx = getRandomNumber(-50, 50);
+      var randy = getRandomNumber(-20, 20);
+
+      if (counter % ringRate == 0) {
+        var osc = 1;
+
+        var ring_transform = mult( model_transform, rotation( 90, 0, 1, 0 ) );
+        ring_transform = mult(ring_transform, scale(10, 10, 10));
+
+        var heart_transform = mult( model_transform, rotation( 90, 0, 1, 0 ) );
+        heart_transform = mult(heart_transform, scale(2, 2, 2));
+
+        add_object(shapes_in_use.ringobj, ring_material, vec3(randx, randy, -100), ringSpeed, ring_transform);
+        add_object(shapes_in_use.heartobj, heart_material, vec3(randx, randy, -100), ringSpeed, heart_transform); // TODO: HEART INCREASE LIFE +1, RANDOM POSITION
+        // add_object(shapes_in_use.ring, ringTexture, vec3(randx, randy, -100), ringSpeed);
+        add_object(shapes_in_use.collisionDisk, transparent, vec3(randx, randy, -100), ringSpeed);
+      } else if (counter % asteroidRate == 0) {
+
+        randx = getRandomNumber(-50, 50);
+        randy = getRandomNumber(-20, 20);
+        add_object(shapes_in_use.asteroid, asteroidTexture, vec3(randx, randy, -100), asteroidSpeed);
+      }
+      if (asteroidRate > 20 && counter == 1000) {
+        // console.log("leveling up");
+        asteroidRate -= 10;
+        asteroidSpeed -= 5;
+        ringSpeed -= 3;
+        ringRate -= 4;
+        counter = 0;
+      }
+
+
+      var shape, material, offset, pos, zpos;
+      //gameobject:(shape, material, animationtime, startpos)
+      var iterator = head;
+      while (iterator != null) {
+        gameObject = iterator.data;
+        pos = gameObject[3];
+        offset = gameObject[2];
+        speed = gameObject[4];
+
+        zpos = pos[2] + (graphics_state.animation_time - offset) / speed;
+
+        if (zpos > 5 && iterator == head) {
+          head = head.next;
+          iterator = iterator.next;
+          continue;
         }
 
-        // *** Lights: *** Values of vector or point lights over time.  Arguments to construct a Light(): position or vector (homogeneous coordinates), color, size
-        // If you want more than two lights, you're going to need to increase a number in the vertex shader file (index.html).  For some reason this won't work in Firefox.
-        graphics_state.lights = [];                    // First clear the light list each frame so we can replace & update lights.
+        shape = gameObject[0];
+        material = gameObject[1];
+        model_transform = gameObject[5];
+        model_transform = mult(translation(pos[0], pos[1], zpos), model_transform);
 
-        var t = graphics_state.animation_time/1000, light_orbit = [ Math.cos(t), Math.sin(t) ];
-        graphics_state.lights.push( new Light( vec4( 5, 5, 40, 1 ), Color( 1, 1, 1, 1 ), 20 ) );
-        // graphics_state.lights.push( new Light( vec4( -10*light_orbit[0], -20*light_orbit[1], -14*light_orbit[0], 0 ), Color( 1, 1, .3, 1 ), 100*Math.cos( t/10 ) ) );
+        if (colliderCount == 0 || shape.class_name === "Regular_2D_Polygon") {
+          //collision detection
+          var collider = mult(inverse(rocketSphere), model_transform);
+          for (var i = 0; i < shape.positions.length; i++) {
+            var point = shape.positions[i];
+            var c = mult_vec(collider, vec4(point[0], point[1], point[2], 1));
+            var dist = length(vec3(c[0], c[1], c[2]));
 
-        // *** Materials: *** Declare new ones as temps when needed; they're just cheap wrappers for some numbers.
-        // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
-        // Omit the final (string) parameter if you want no texture
-                                                      //ambient, diffuse, specular, specular exponent
+            var checker;
+            if (!(shape.class_name === "Sphere"))
+              checker = ringColliderSphere;
+            else
+              checker = colliderSphere;
 
-        // FIRST: Make the background (giant cube texture mapped with sky)
-        var backgroundSky = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/starry-sky.jpg");
-        var sky_transform = mult(mat4(), scale(500, 500, 500));
-        shapes_in_use.cube.draw(graphics_state, sky_transform, backgroundSky);
+            if (dist < checker) {
+              if (shape.class_name === "Regular_2D_Polygon") {
+                if (pointBuffer == 0) {
+                  this.shared_scratchpad.game_state.score_amount += 1000;
+                  pointBuffer++;
+                }
+                break;
+              }
+              colliderCount++;
+              if (this.shared_scratchpad.game_state.lives_amount > 0) {
+                if (shape.class_name === "Sphere") {
+                  this.shared_scratchpad.game_state.lives_amount -= 1;
+                }
+                if (this.shared_scratchpad.game_state.lives_amount == 0) {
+                  isDead = true;
+                  console.log("we dead");
+                  break;
+                }
+                break;
+              }
+            }
+          }
+        }
 
-        // ************ MAKE A SPACESHIP ********** //
-        // CONTROL MOVEMENT
-        spaceship_transform = mat4();
+        if (colliderCount != 0) {
+
+          colliderCount++;
+          if (colliderCount == 500)
+            colliderCount = 0;
+        }
+
+        if (isDead) {
+          this.shared_scratchpad.game_state.display_text = "GAME OVER";
+          this.shared_scratchpad.animate = false;
+        }
+
+        if (!(shape.class_name === "Regular_2D_Polygon"))
+          shape.draw(graphics_state, model_transform, material);
+        iterator = iterator.next;
+      }
+
+      if (pointBuffer != 0) {
+        pointBuffer++;
+        if (pointBuffer == 20)
+          pointBuffer = 0;
+      }
+    },
+    'spaceship_controls': function() {
         if (key_left){
           xforce--;
         }
@@ -428,84 +624,82 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
         // bounded movement range
         playerlocationx = playerlocationx + pixelx;
-        if (playerlocationx >= 2500)
-          playerlocationx = 2500;
-        if (playerlocationx <= -2500)
-          playerlocationx = -2500;
+        if (playerlocationx >= 20000)
+          playerlocationx = 20000;
+        if (playerlocationx <= -20000)
+          playerlocationx = -20000;
 
         playerlocationy = playerlocationy + pixely;
-        if (playerlocationy >= 1700)
-          playerlocationy = 1700;
-        if (playerlocationy <= 0)
-          playerlocationy = 0;
+        if (playerlocationy >= 20000)
+          playerlocationy = 20000;
+        if (playerlocationy <= -20000)
+          playerlocationy = -20000;
+    },
+    'display': function(time)
+      {
+        //this.shared_scratchpad.graphics_state.camera_transform = mult( rotation( 8, -1, 0, 0 ), this.shared_scratchpad.graphics_state.camera_transform );
+        var graphics_state  = this.shared_scratchpad.graphics_state,
+            model_transform = mat4();             // We have to reset model_transform every frame, so that as each begins, our basis starts as the identity.
 
-        spaceship_transform = mult(spaceship_transform, translation(playerlocationx/100, playerlocationy/100, 0, 0 ), spaceship_transform);
+        // shaders_in_use[ "Default" ].activate();
+        shaders_in_use[ "Bump_Mapping" ].activate();
+        // shaders_in_use[ "Plasma_Shader" ].activate();
+
+        gl.enable(gl.BLEND);
+        // gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+
+        counter++;
+
+        // *** Lights: *** Values of vector or point lights over time.  Arguments to construct a Light(): position or vector (homogeneous coordinates), color, size
+        // If you want more than two lights, you're going to need to increase a number in the vertex shader file (index.html).  For some reason this won't work in Firefox.
+        graphics_state.lights = [];                    // First clear the light list each frame so we can replace & update lights.
+
+        var t = graphics_state.animation_time/1000, light_orbit = [ Math.cos(t), Math.sin(t) ];
+        graphics_state.lights.push( new Light( vec4( 5, 5, 40, 1 ), Color( 1, 1, 1, 1 ), 20 ) );
+        // graphics_state.lights.push( new Light( vec4( -10*light_orbit[0], -20*light_orbit[1], -14*light_orbit[0], 0 ), Color( 1, 1, .3, 1 ), 100*Math.cos( t/10 ) ) );
+
+        // *** Materials: *** Declare new ones as temps when needed; they're just cheap wrappers for some numbers.
+        // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
+        // Omit the final (string) parameter if you want no texture
+                                                      //ambient, diffuse, specular, specular exponent
+
+        // FIRST: Make the background (giant cube texture mapped with sky)
+        var backgroundSky = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/starry-sky.jpg");
+        var sky_transform = mult(mat4(), scale(500, 500, 500));
+        shapes_in_use.cube.draw(graphics_state, sky_transform, backgroundSky);
+
+        // ************ MAKE A SPACESHIP ********** //
+        spaceship_transform = mat4();
+        spaceship_transform = mult(spaceship_transform, translation(playerlocationx/100, playerlocationy/100, 0, 0 ));
+        var camera_transform = spaceship_transform;
+        camera_transform = mult(camera_transform, translation(1, 5, 30));
+        this.shared_scratchpad.graphics_state.camera_transform = inverse(camera_transform);
         // smoke_transform = mult(smoke_transform, translation, smoke_transform);
 
-        var prescale = .5;  // control spaceship size
-
+        var prescale = .35;  // control spaceship size
         this.spaceship(spaceship_transform, graphics_state, prescale);  // specify position, etc with model_transform
-     
-        if (key_left || key_up || key_right || key_down) {
-          initSmokeParticles(t, spaceship_transform);
-        }
-
-        this.smoke(t, graphics_state);
-        
-
-        // ************ GAME OBJECTS ********** //
-
-        var cube1 = new Material( Color( 1,1,0,1 ), .4, .8, .9, 50 ),
-            cube2 = new Material( Color( 1,0,1,1 ), .4, .8, .9, 50 ),
-            asteroidTexture = new Material ( Color(1, 1, 1, 1), .4, .8, .9, 50, "images/asteroid.jpg");
 
 
-        var randx = getRandomNumber(-50, 50);
-        var randy = getRandomNumber(-20, 20)
-
-        if (counter % 50 == 0){
-          counter = 0;
-          add_object(shapes_in_use.asteroid, asteroidTexture, vec3(randx, randy, -100));
-          randx = getRandomNumber(-50, 50);
-          randy = getRandomNumber(-20, 20)
-          add_object(shapes_in_use.ring, cube1, vec3(randx, randy, -100));
-        }
-
-        var shape, material, offset, pos, zpos;
-        //gameobject:(shape, material, animationtime, startpos)
-        var iterator = head;
-        while(iterator != null){
-          gameObject = iterator.data;
-          pos = gameObject[3];
-          offset = gameObject[2];
-
-          zpos = pos[2] + (graphics_state.animation_time - offset)/60.0;
-
-          if (zpos > 0 && iterator == head){
-            nodecount--;
-            head = head.next;
-            iterator = iterator.next;
-            continue;
+        if (!isDead) {
+          this.spaceship_controls();
+          if (key_left || key_up || key_right || key_down) {
+            initSmokeParticles(t, spaceship_transform);
           }
-
-          shape = gameObject[0];
-          material = gameObject[1];
-
-          model_transform = mat4();
-          model_transform = mult(translation(pos[0], pos[1], zpos) , model_transform );
-
-          shape.draw( graphics_state, model_transform, material);
-          iterator = iterator.next;
+          this.smoke();
+          this.create_game_objects();
+          this.shared_scratchpad.game_state.score_amount++;
+        }
+        else {
+          this.smoke();
+          this.draw_shapes();
         }
 
-        // test for display_text
         if (!this.shared_scratchpad.game_state.flags["display_text"]) {
           var text = document.getElementById("input").value;
           console.log(text);
-          this.shared_scratchpad.game_state.count_down_timer("display_text", 0.1, text);
+          this.shared_scratchpad.game_state.count_down_timer("display_text", 5, text);
         }
-
-      }
+    }
   }, Animation );
 
   /* ==============================
@@ -523,7 +717,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           lives: document.getElementById("lives-text"),
           display_text: document.getElementById("main-display-text")
         });
-        this.shared_scratchpad.game_state = {score_amount: 0, lives_amount: 3, display_text: "hi world"};
+        this.shared_scratchpad.game_state = {score_amount: 0, lives_amount: 1, display_text: "hi world"};
         this.shared_scratchpad.game_state.flags = {"asteroid": true, "ring": true, "display_text": false};
         this.shared_scratchpad.game_state.flag_timers = {"asteroid": Number.MAX_SAFE_INTEGER, "ring": Number.MAX_SAFE_INTEGER, "display_text": Number.MAX_SAFE_INTEGER};
         this.shared_scratchpad.game_state.count_down_timer = function(object, count_down_time, text_string = "") {
@@ -546,16 +740,17 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         }
       },
       'display': function (time) {
-        this.score.innerHTML = "Score: " + this.shared_scratchpad.game_state.score_amount++;
+        this.score.innerHTML = "Score: " + this.shared_scratchpad.game_state.score_amount;
         this.lives.innerHTML = "Lives: " + this.shared_scratchpad.game_state.lives_amount;
         this.display_text.innerHTML = this.shared_scratchpad.game_state.display_text;
         this.update_timers();
       }
     }, Animation);
 
-
-
-    function getRandomNumber(min, max) {
-      return Math.random() * (max - min) + min;
-    }
-
+Shape.prototype.normalize_positions = function()
+  { var average_position = vec3(), average_length = 0;
+    for( var i = 0; i < this.positions.length; i++ ) average_position  =  add( average_position, scale_vec( 1/this.positions.length, this.positions[i] ) );
+    for( var i = 0; i < this.positions.length; i++ ) this.positions[i] =  subtract( this.positions[i], average_position );
+    for( var i = 0; i < this.positions.length; i++ ) average_length    += 1/this.positions.length * length( this.positions[i] );
+    for( var i = 0; i < this.positions.length; i++ ) this.positions[i] =  scale_vec( 1/average_length, this.positions[i] );
+  }

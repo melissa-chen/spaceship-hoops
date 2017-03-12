@@ -49,8 +49,11 @@ Declare_Any_Class( "Phong_or_Gouraud_Shader",
           attribute vec4 vColor;
           attribute vec3 vPosition, vNormal;
           attribute vec2 vTexCoord;
+
           varying vec2 fTexCoord;
           varying vec3 N, E, pos;
+          
+          varying vec3 fPositionCoord;
 
           uniform float ambient, diffusivity, shininess, smoothness, animation_time, attenuation_factor[N_LIGHTS];
           uniform bool GOURAUD, COLOR_NORMALS, COLOR_VERTICES;    // Flags for alternate shading methods
@@ -69,7 +72,9 @@ Declare_Any_Class( "Phong_or_Gouraud_Shader",
 
             vec4 object_space_pos = vec4(vPosition, 1.0);
             gl_Position = projection_camera_model_transform * object_space_pos;
+
             fTexCoord = vTexCoord;
+            fPositionCoord = vPosition;
 
             if( COLOR_NORMALS || COLOR_VERTICES )   // Bypass phong lighting if we're lighting up vertices some other way
             {
@@ -97,9 +102,8 @@ Declare_Any_Class( "Phong_or_Gouraud_Shader",
               for(int i = 0; i < N_LIGHTS; i++)
               {
                 float attenuation_multiplier = 1.0 / (1.0 + attenuation_factor[i] * (dist[i] * dist[i]));
-                float diffuse  = max(dot(L[0], N), 0.0);                                                                                 // TODO
-                float specular = pow(max(dot(N, H[0]), 0.0), smoothness);                                                                                // TODO
-
+                float diffuse  = max(dot(L[0], N), 0.0);
+                float specular = pow(max(dot(N, H[0]), 0.0), smoothness);
                 VERTEX_COLOR.xyz += attenuation_multiplier * ( shapeColor.xyz * diffusivity * diffuse + lightColor[i].xyz * shininess * specular );
               }
               VERTEX_COLOR.a = VERTEX_COLOR.w;
@@ -141,17 +145,12 @@ Declare_Any_Class( "Phong_or_Gouraud_Shader",
 
             vec4 tex_color = texture2D( texture, fTexCoord );
 
-            //bump mapping
-            vec3 normal = N;
-            // vec3 normal = normalize(tex_color.rgb * 2.0 - 1.0);
-
-
             gl_FragColor = tex_color * ( USE_TEXTURE ? ambient : 0.0 ) + vec4( shapeColor.xyz * ambient, USE_TEXTURE ? shapeColor.w * tex_color.w : shapeColor.w ) ;
             for( int i = 0; i < N_LIGHTS; i++ )
             {
               float attenuation_multiplier = 1.0 / (1.0 + attenuation_factor[i] * (dist[i] * dist[i]));
-              float diffuse  = max(dot(L[0], normal), 0.0);                                                                                 // TODO
-              float specular = pow(max(dot(normal, H[0]), 0.0), smoothness);                                                                                 // TODO
+              float diffuse  = max(dot(L[0], N), 0.0);
+              float specular = pow(max(dot(N, H[0]), 0.0), smoothness);
 
               gl_FragColor.xyz += attenuation_multiplier * (shapeColor.xyz * diffusivity * diffuse  + lightColor[i].xyz * shininess * specular );
             }
@@ -182,6 +181,83 @@ Declare_Any_Class( "Funny_Shader",                    // This one borrows almost
               4.0 * u * sin(19.0 * u ) + 5.0 * v * sin(13.0 * v ) + 3.0 * sin(15.0 * a),
               5.0 * u * sin(20.0 * u ) + 6.0 * v * sin(14.0 * v ) + 4.0 * sin(16.0 * a));
             gl_FragColor.a = gl_FragColor.w;
+          }`;
+      }
+  }, Phong_or_Gouraud_Shader );
+
+Declare_Any_Class( "Bump_Mapping",                    
+{ 'fragment_glsl_code_string': function()           // ********* FRAGMENT SHADER *********
+    { return `
+        precision mediump float;                          //  Like real bump mapping, but with no separate file for the bump map
+                                                          // (instead we'll re-use the colors of the original picture file to
+        const int N_LIGHTS = 2;                           // disturb the normal vectors)
+
+        uniform vec4 lightColor[N_LIGHTS], shapeColor;
+        varying vec3 L[N_LIGHTS], H[N_LIGHTS];
+        varying float dist[N_LIGHTS];
+        varying vec4 VERTEX_COLOR;
+
+        uniform float ambient, diffusivity, shininess, smoothness, animation_time, attenuation_factor[N_LIGHTS];
+
+        varying vec2 fTexCoord;   // per-fragment interpolated values from the vertex shader
+        varying vec3 N, E, pos;
+
+        uniform sampler2D texture;
+        uniform bool GOURAUD, COLOR_NORMALS, COLOR_VERTICES, USE_TEXTURE;
+
+        void main()
+        {
+          if( GOURAUD || COLOR_NORMALS )    // Bypass phong lighting if we're only interpolating predefined colors across vertices
+          {
+            gl_FragColor = VERTEX_COLOR;
+            return;
+          }
+
+          vec4 tex_color = texture2D( texture, fTexCoord );
+          vec3 bumped_N  = normalize( N + tex_color.rgb - .5*vec3(1,1,1) );
+          gl_FragColor = tex_color * ( USE_TEXTURE ? ambient : 0.0 ) + vec4( shapeColor.xyz * ambient, USE_TEXTURE ? shapeColor.w * tex_color.w : shapeColor.w ) ;
+          for( int i = 0; i < N_LIGHTS; i++ )
+          {
+            float attenuation_multiplier = 1.0 / (1.0 + attenuation_factor[i] * (dist[i] * dist[i]));
+            float diffuse  =      max(dot(bumped_N, L[i]), 0.0);
+            float specular = pow( max(dot(bumped_N, H[i]), 0.0), smoothness );
+
+            gl_FragColor.xyz += attenuation_multiplier * (shapeColor.xyz * diffusivity * diffuse  + lightColor[i].xyz * shininess * specular );
+          }
+          gl_FragColor.a = gl_FragColor.w;
+        }`;
+    }
+}, Phong_or_Gouraud_Shader );
+
+Declare_Any_Class( "Plasma_Shader",
+  { 'fragment_glsl_code_string': function()
+      { return `
+          precision mediump float;
+          #define PI 3.1415926535897932384626433832795
+
+          uniform float animation_time;
+          uniform bool USE_TEXTURE;
+          varying vec3 fPositionCoord;
+
+          vec2 scale_factor = vec2(1.3, 1.7);
+          float animation_time_seconds = animation_time / 500.0;
+
+          void main()
+          {
+            if( !USE_TEXTURE ) return;    // USE_TEXTURE must be enabled for any shape using this shader; otherwise texture_coords lookup will fail.
+
+            vec2 vertex_xy = fPositionCoord.xy;
+
+            float v = 0.0;
+            vec2 c = (vertex_xy * scale_factor) - scale_factor/200.0;
+            v += sin((c.x+animation_time));
+            v += sin((c.y+animation_time)/200.0);
+            v += sin((c.x+c.y+animation_time)/200.0);
+            c += scale_factor/2.0 * vec2(sin(animation_time/300.0), cos(animation_time/200.0));
+            v += sin(sqrt(c.x*c.x+c.y*c.y+1.0)+animation_time);
+            v = v/2.0;
+            vec3 col = vec3(1.0, sin(PI*v), cos(PI*v));
+            gl_FragColor = vec4(col*.5 + .5, 1);
           }`;
       }
   }, Phong_or_Gouraud_Shader );
