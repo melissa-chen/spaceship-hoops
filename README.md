@@ -44,3 +44,7 @@ We used bump mapping to texture the spaceship and asteroids.
 (4) Smoke
 
 We used smoke that comes out of the spaceship as it moves.
+
+(5) Physics
+
+We used physics for the controls of the ship to make it seem more realistic.

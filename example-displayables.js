@@ -446,6 +446,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
       'collider_activity': function(shape){
         if (shape.class_name === "Regular_2D_Polygon") {
           if (pointBuffer == 0) {
+            this.shared_scratchpad.game_state.count_down_timer("display_text", 1.5, "You went through a ring!</br>Points +1000");
             this.shared_scratchpad.game_state.score_amount += 1000;
             var audio = new Audio('sound/Sonic_Ring.mp3');
             audio.play();
