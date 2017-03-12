@@ -459,7 +459,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         randx = getRandomNumber(-50, 50);
         randy = getRandomNumber(-20, 20);
         var asteroid_transform = mult(mat4(), scale(10,10,10));
-        add_object(shapes_in_use.asteroidobj, asteroid_material, vec3(randx, randy, -100), asteroidSpeed, asteroid_transform);
+        // add_object(shapes_in_use.asteroidobj, asteroid_material, vec3(randx, randy, -100), asteroidSpeed, asteroid_transform);
         add_object(shapes_in_use.asteroid, asteroidTexture, vec3(randx, randy, -100), asteroidSpeed);
       }
       if (asteroidRate > 20 && counter == 1000) {
@@ -512,6 +512,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
               if (shape.class_name === "Regular_2D_Polygon") {
                 if (pointBuffer == 0) {
                   this.shared_scratchpad.game_state.score_amount += 1000;
+                  var audio = new Audio('sound/Sonic_Ring.mp3');
+                  audio.play();
                   pointBuffer++;
                 }
                 break;
@@ -520,6 +522,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
               if (this.shared_scratchpad.game_state.lives_amount > 0) {
                 if (shape.class_name === "Sphere") {
                   this.shared_scratchpad.game_state.lives_amount -= 1;
+                    var audio = new Audio('sound/Junk_Crash.mp3');
+                    audio.play();
                 }
                 if (this.shared_scratchpad.game_state.lives_amount == 0) {
                   isDead = true;
