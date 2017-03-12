@@ -18,7 +18,6 @@ var colliderCount = 0;
 var isDead = false;
 var pointBuffer = 0;
 var smokeParticle = [];
-var oscType = 0 // 0: still, 1: hor, 2: vert, 3: spiral
 
 function initSmokeParticles(bt, spaceship_transform) {
   // smokeParticle = [];
@@ -430,18 +429,17 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
       var randy = getRandomNumber(-20, 20);
 
       if (counter % ringRate == 0) {
-        var osc = 1;
-        add_object(shapes_in_use.ring, ringTexture, vec3(randx, randy, -100), ringSpeed);
-        add_object(shapes_in_use.collisionDisk, transparent, vec3(randx, randy, -100), ringSpeed);
+        var osc = Math.floor(getRandomNumber(0, 6));
+        add_object(shapes_in_use.ring, ringTexture, vec3(randx, randy, -100), ringSpeed, mat4(), osc);
+        add_object(shapes_in_use.collisionDisk, transparent, vec3(randx, randy, -100), ringSpeed, mat4(), osc);
       } else if (counter % asteroidRate == 0) {
-
         randx = getRandomNumber(-50, 50);
         randy = getRandomNumber(-20, 20);
         add_object(shapes_in_use.asteroid, asteroidTexture, vec3(randx, randy, -100), asteroidSpeed);
       }
       if (asteroidRate > 20 && counter == 1000) {
         // console.log("leveling up");
-        asteroidRate -= 10;
+        asteroidRate -= 11;
         asteroidSpeed -= 5;
         ringSpeed -= 3;
         ringRate -= 4;
@@ -449,8 +447,9 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
       }
 
 
-      var shape, material, offset, pos, zpos;
-      //gameobject:(shape, material, animationtime, startpos)
+      var shape, material, offset, pos, zpos, oscx, oscy, oscType;
+      //oscType 0: still, 1: hor, 2: vert, 3: spiral, 4: diag rightleft 5: diag left right
+      //gameobject:(shape, material, animationtime, startpos, speed, transform, oscType)
       var iterator = head;
       while (iterator != null) {
         gameObject = iterator.data;
@@ -460,7 +459,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
         zpos = pos[2] + (graphics_state.animation_time - offset) / speed;
 
-        if (zpos > 5 && iterator == head) {
+        if (zpos > 32 && iterator == head) {
           head = head.next;
           iterator = iterator.next;
           continue;
@@ -469,7 +468,30 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         shape = gameObject[0];
         material = gameObject[1];
         model_transform = gameObject[5];
-        model_transform = mult(translation(pos[0], pos[1], zpos), model_transform);
+        oscType = gameObject[6];
+        console.log(oscType);
+        oscx = 0;
+        oscy = 0;
+        if(oscType == 1) {  // horiztonal
+          oscx = Math.sin((graphics_state.animation_time - offset)/(speed*20)) * 12;
+        }
+        else if (oscType == 2) { // vertical
+          oscy = Math.cos((graphics_state.animation_time - offset)/(speed*20)) * 12;
+        }
+        else if (oscType == 3) { // spiral
+          oscx = Math.sin((graphics_state.animation_time - offset)/(speed*20)) * 12;
+          oscy = Math.cos((graphics_state.animation_time - offset)/(speed*20)) * 12;
+        }
+        else if (oscType == 4) { // diag right left
+          oscx = Math.sin((graphics_state.animation_time - offset)/(speed*20)) * 12;
+          oscy = Math.sin((graphics_state.animation_time - offset)/(speed*20)) * 12;
+        }
+        else if (oscType == 5) { // diag left right
+          oscx = -Math.sin((graphics_state.animation_time - offset)/(speed*20)) * 12;
+          oscy = Math.sin((graphics_state.animation_time - offset)/(speed*20)) * 12;
+        }
+
+        model_transform = mult(translation(pos[0] + oscx, pos[1] + oscy, zpos), model_transform);
 
         if (colliderCount == 0 || shape.class_name === "Regular_2D_Polygon") {
           //collision detection
