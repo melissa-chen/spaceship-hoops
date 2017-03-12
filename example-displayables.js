@@ -106,6 +106,7 @@ function handleKeyDown(event){
     console.log("God Mode");
     asteroidRate = 10;
     asteroidSpeed = 10.0;
+    ringSpeed = 15.0;
   } // god mode
     
 }
