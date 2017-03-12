@@ -103,6 +103,36 @@ function handleKeyUp(event){
     key_down = false;
 }
 
+function reset_values(){
+  spaceship_transform = mat4();
+  posOffset = [];
+  gameObjects = [];
+  counter = 1;
+  head = null;
+  tail = null;
+  ringRate = 220, asteroidRate = 100;
+  ringSpeed = 60.0, asteroidSpeed = 60.0;
+  rocketSphere;
+  colliderSphere = 4.2;
+  ringColliderSphere = 1.3;
+  colliderCount = 0;
+  isDead = false;
+  pointBuffer = 0;
+  smokeParticle = [];
+
+  playerlocationx = 0;
+  playerlocationy = 0;
+  maxspeed = 4;
+  xforce = 0;
+  yforce = 0;
+  pixelx = 0;
+  pixely = 0;
+  key_left = false;
+  key_right = false;
+  key_up = false;
+  key_down = false;
+}
+
 Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayable object that our class Canvas_Manager can manage.  Displays a text user interface.
   { 'construct': function( context )
       { this.define_data_members( { string_map: context.shared_scratchpad.string_map, start_index: 0, tick: 0, visible: false, graphicsState: new Graphics_State() } );
@@ -269,8 +299,13 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         controls.add( "ALT+g", this, function() { this.shared_scratchpad.graphics_state.gouraud       ^= 1; } );   // Make the keyboard toggle some
         controls.add( "ALT+n", this, function() { this.shared_scratchpad.graphics_state.color_normals ^= 1; } );   // GPU flags on and off.
         controls.add( "ALT+a", this, function() { this.shared_scratchpad.animate                      ^= 1; } );
-        controls.add( "r", this, function() { rotationOffset =  this.shared_scratchpad.graphics_state.animation_time - rotationOffset;
-                                                rotate = !rotate; })
+        controls.add( "r", this, function() {
+          reset_values();
+          this.shared_scratchpad.animate = true;
+          this.shared_scratchpad.game_state.score_amount = 0;
+          this.shared_scratchpad.game_state.lives_amount = 1;
+          this.shared_scratchpad.game_state.display_text = "hi world";
+        })
       },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
@@ -628,12 +663,11 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         var prescale = .35;  // control spaceship size
         this.spaceship(spaceship_transform, graphics_state, prescale);  // specify position, etc with model_transform
 
-        if (key_left || key_up || key_right || key_down) {
-          initSmokeParticles(t, spaceship_transform);
-        }
-
         if (!isDead) {
           this.spaceship_controls();
+          if (key_left || key_up || key_right || key_down) {
+            initSmokeParticles(t, spaceship_transform);
+          }
           this.smoke();
           this.create_game_objects();
           this.shared_scratchpad.game_state.score_amount++;
