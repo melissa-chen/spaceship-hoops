@@ -22,7 +22,7 @@ var oscType = 0 // 0: still, 1: hor, 2: vert, 3: spiral
 
 function initSmokeParticles(bt, spaceship_transform) {
   // smokeParticle = [];
-  var numParticles = 5;
+  var numParticles = 2;
   for (var i = 0; i < numParticles; i++) {
     var sx = Math.cos(Math.random() * 2 * Math.PI);
     var sy = Math.cos(Math.random() * 2 * Math.PI);
@@ -73,6 +73,8 @@ var xforce = 0;
 var yforce = 0;
 var pixelx = 0;
 var pixely = 0;
+var left_right_rotation = 0;
+var up_down_rotation = 0;
 var key_left = false;
 var key_right = false;
 var key_up = false;
@@ -200,39 +202,6 @@ Declare_Any_Class( "Example_Camera",     // An example of a displayable object t
         //move camera in and out along z axis
         controls.add( "i",     this, function() { this.thrust[2] =  1; } );     controls.add( "i",     this, function() { this.thrust[2] =  0; }, {'type':'keyup'} );
         controls.add( "o",     this, function() { this.thrust[2] =  -1; } );     controls.add( "o",     this, function() { this.thrust[2] =  0; }, {'type':'keyup'} );
-
-    //    control system to move the camera angle.  If the camera is attached to a planet, only the heading can be change left/right
-        // controls.add( "left",  this, function() {
-        //   spaceship_transform = mult( translation( -.5, 0, 0, 0 ), spaceship_transform );
-        //
-        //   if (leftRot <= maxRotations) {
-        //     leftRot++;
-        //     rightRot--;
-        //     var zRotationMatrix = mat4();
-        //     zRotationMatrix = mult(zRotationMatrix, rotation(-3, [0, 0, 1]));
-        //     spaceship_transform = mult(spaceship_transform, zRotationMatrix);
-        //   }
-        //
-        // });
-        // controls.add( "right",  this, function() {
-        //   spaceship_transform = mult( translation( .5, 0, 0, 0 ), spaceship_transform );
-        //
-        //   if (rightRot <= maxRotations) {
-        //     rightRot++;
-        //     leftRot--;
-        //     var zRotationMatrix = mat4();
-        //     zRotationMatrix = mult(zRotationMatrix, rotation(3, [0, 0, 1]));
-        //     spaceship_transform = mult(spaceship_transform, zRotationMatrix);
-        //   }
-        // });
-
-        //  TODO: limit camera up/down changes
-        // controls.add( "up",  this, function() {
-        //   this.graphics_state.camera_transform = mult( rotation( 2, -1, 0, 0 ), this.graphics_state.camera_transform );
-        // });
-        // controls.add( "down",  this, function() {
-        //   this.graphics_state.camera_transform = mult( rotation( 2, 1, 0, 0 ), this.graphics_state.camera_transform );
-        // });
 
       },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
@@ -583,27 +552,52 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
       }
     },
     'spaceship_controls': function() {
+
+        function clamp(num, min, max) {
+          return num <= min ? min : num >= max ? max : num;
+        }
+
+        function descent(num) {
+          var zero_diff = Math.min(0.5, Math.abs(num));
+          return num < 0 ? num + zero_diff : num > 0 ? num - zero_diff : num;
+        }
+
         if (key_left){
+          left_right_rotation += 1.3;
           xforce--;
         }
         if (key_right){
+          left_right_rotation -= 1.3;
           xforce++;
         }
         if (key_down){
+          up_down_rotation -= 0.8;
           yforce--;
         }
         if (key_up){
+          up_down_rotation += 0.8;
           yforce++;
         }
+
         // handle acceleration
-        if (xforce > maxspeed)
-            xforce = maxspeed;
-        if (xforce < -maxspeed)
-            xforce = -maxspeed;
-        if (yforce > maxspeed)
-            yforce = maxspeed;
-        if (yforce < -maxspeed)
-            yforce = -maxspeed;
+        xforce = clamp(xforce, -1*maxspeed, maxspeed);
+        yforce = clamp(yforce, -1*maxspeed, maxspeed);
+
+        // bounded movement range
+        playerlocationx = clamp(playerlocationx + pixelx, -20000, 20000);
+        playerlocationy = clamp(playerlocationy + pixely, -20000, 20000);
+
+        // bounded rotation range
+        left_right_rotation = clamp(left_right_rotation, -25, 25);
+        up_down_rotation = clamp(up_down_rotation, -10, 10);
+
+        // reset ship rotation if no keys are pressed
+        if (!(key_left && key_right)) {
+          left_right_rotation = descent(left_right_rotation);
+        }
+        if (!(key_down && key_up)) {
+          up_down_rotation = descent(up_down_rotation);
+        }
 
         // abrupt stop
         if (!key_left && !key_right){
@@ -622,18 +616,6 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           pixely += yforce;
         }
 
-        // bounded movement range
-        playerlocationx = playerlocationx + pixelx;
-        if (playerlocationx >= 20000)
-          playerlocationx = 20000;
-        if (playerlocationx <= -20000)
-          playerlocationx = -20000;
-
-        playerlocationy = playerlocationy + pixely;
-        if (playerlocationy >= 20000)
-          playerlocationy = 20000;
-        if (playerlocationy <= -20000)
-          playerlocationy = -20000;
     },
     'display': function(time)
       {
@@ -677,7 +659,9 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         // smoke_transform = mult(smoke_transform, translation, smoke_transform);
 
         var prescale = .35;  // control spaceship size
-        this.spaceship(spaceship_transform, graphics_state, prescale);  // specify position, etc with model_transform
+        var rotated_spaceship_transform = mult(spaceship_transform, rotation(left_right_rotation, [0, 0, 1]));
+        var rotated_spaceship_transform = mult(rotated_spaceship_transform, rotation(up_down_rotation, [1, 0, 0]));
+        this.spaceship(rotated_spaceship_transform, graphics_state, prescale);  // specify position, etc with model_transform
 
 
         if (!isDead) {
