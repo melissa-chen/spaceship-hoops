@@ -9,7 +9,8 @@ var posOffset = [];
 var gameObjects = [];
 var counter = 1;
 var head, tail;
-var ringRate = 220, asteroidRate = 100;
+var heartCounter = 0;
+var ringRate = 220, asteroidRate = 100, heartRate = 1500;
 var ringSpeed = 60.0, asteroidSpeed = 60.0;
 var rocketSphere;
 var colliderSphere = 4.2;
@@ -368,10 +369,10 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
         // collision sphere
         model_transform = bodyCenter;
-        rocketSphere = bodyCenter;
-        // shapes_in_use.ringCollisionSphere.draw(graphics_state, model_transform, icyGray);
+        rocketSphere = mult(model_transform, scale(.8, 0.2, 1));
+        //shapes_in_use.collisionSphere.draw(graphics_state, rocketSphere, icyGray);
         // model_transform = translation(0, 0, -5);
-        // shapes_in_use.collisionDisk.draw(graphics_state, model_transform, icyGray);
+         // shapes_in_use.ringCollisionSphere.draw(graphics_state, model_transform, icyGray);
 
       },
     'smoke' : function () {
@@ -441,21 +442,33 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           var ring_transform = mult( mat4(), rotation( 90, 0, 1, 0 ) );
           ring_transform = mult(ring_transform, scale(5.5, 5.5, 5.5));
 
-          var heart_transform = mult( model_transform, rotation( 90, 0, 1, 0 ) );
-          heart_transform = mult(heart_transform, scale(2, 2, 2));
-
           add_object(shapes_in_use.ringobj, ring_material, vec3(randx, randy, -100), ringSpeed, ring_transform, osc);
-          add_object(shapes_in_use.heartobj, heart_material, vec3(randx, randy, -100), ringSpeed, heart_transform); // TODO: HEART INCREASE LIFE +1, RANDOM POSITION
           add_object(shapes_in_use.collisionDisk, transparent, vec3(randx, randy, -100), ringSpeed, mat4(), osc);
         } else if (counter % asteroidRate == 0) {
-          // randx = getRandomNumber(-50, 50);
           randx = getRandomNumber(spaceship_transform[0][3]-50, spaceship_transform[0][3]+50);
-          // randy = getRandomNumber(-20, 20);
           randy = getRandomNumber(spaceship_transform[1][3]-20, spaceship_transform[1][3]+20);
-          var asteroid_transform = mult(mat4(), scale(6,6,6));
+          var asteroidSize = getRandomNumber(3, 10);
+          var asteroid_transform = mult(mat4(), scale(asteroidSize, asteroidSize, asteroidSize));
            add_object(shapes_in_use.asteroidobj, asteroid_material, vec3(randx, randy, -100), asteroidSpeed, asteroid_transform);
           //add_object(shapes_in_use.asteroid, asteroidTexture, vec3(randx, randy, -100), asteroidSpeed);
         }
+
+        heartCounter++;
+        console.log(heartCounter);
+        if (heartCounter == heartRate) {
+          console.log("should spawn a life?");
+          var shouldSpawn = getRandomNumber(0, 100);
+          if(shouldSpawn <= 35){
+            console.log("spawned a life");
+            randx = getRandomNumber(spaceship_transform[0][3]-50, spaceship_transform[0][3]+50);
+            getRandomNumber(spaceship_transform[1][3]-20, spaceship_transform[1][3]+20);
+            var heart_transform = mult( model_transform, rotation( 90, 0, 1, 0 ) );
+            heart_transform = mult(heart_transform, scale(2, 2, 2));
+            add_object(shapes_in_use.heartobj, heart_material, vec3(randx, randy, -100), ringSpeed, heart_transform);
+          }
+          heartCounter = 0;
+        }
+
         if (asteroidRate > 20 && counter == 1000) {
           // console.log("leveling up");
           asteroidRate -= 11;
@@ -465,7 +478,9 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           counter = 0;
         }
       },
-      'collider_activity': function(shape, gameObject){
+      'collider_activity': function(gameObject){
+
+        var shape = gameObject[0];
 
         function collisionPhysics(object, shared_scratchpad) {
           var obj_pos = object[3];
@@ -528,40 +543,43 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
             audio.play();
             pointBuffer++;
           }
-          return;
+          return false;
         }
-        colliderCount++;
-        //if (this.shared_scratchpad.game_state.lives_amount > 0) {
-          if (shape.class_name === "Shape_From_File") {
-            var image = shape.filename.toString();
-            if (image == "images/asteroid27.obj") {
-              this.shared_scratchpad.game_state.count_down_timer("display_text", 1.5, "<p class='lose-life-msg'>Lives -1</p>");
-              this.shared_scratchpad.game_state.lives_amount -= 1;
-              initSmokeParticles(20,t,spaceship_transform,"red");
-              var audio = new Audio('sound/Junk_Crash.mp3');
-              console.log(shape);
-              collisionPhysics(gameObject, this.shared_scratchpad);
-              audio.play();
-            }
-            if (image == "images/Heart.obj") {
-              if (this.shared_scratchpad.game_state.lives_amount < 3) {
-                this.shared_scratchpad.game_state.count_down_timer("display_text", 1.5, "<p class='gain-life-msg'>Lives +1</p>");
-                this.shared_scratchpad.game_state.lives_amount += 1;
-                var heartAudio = new Audio('sound/Mario_Extra_Life.mp3');
-                heartAudio.play();
-              } else if (this.shared_scratchpad.game_state.lives_amount >= 3) {
-                this.shared_scratchpad.game_state.count_down_timer("display_text", 1.5, "<p>Max lives reached</p>");
-              }
-            }
+        if (shape.class_name === "Shape_From_File") {
+          var image = shape.filename.toString();
+          if (image == "images/asteroid27.obj") {
+            colliderCount++;
+            this.shared_scratchpad.game_state.count_down_timer("display_text", 1.5, "<p>You hit an asteroid!</p><p class='lose-life-msg'>Lives -1</p>");
+            this.shared_scratchpad.game_state.lives_amount -= 1;
+            initSmokeParticles(20,t,spaceship_transform,"red");
+            collisionPhysics(gameObject, this.shared_scratchpad);
+            var audio = new Audio('sound/Junk_Crash.mp3');
+            audio.play();
           }
-          if (this.shared_scratchpad.game_state.lives_amount == 0) {
-            this.shared_scratchpad.game_state.flag_timers.display_text = Number.MAX_SAFE_INTEGER;
-            isDead = true;
-            return;
+          else if (image == "images/Heart.obj") {
+            if (this.shared_scratchpad.game_state.lives_amount < 3) {
+              this.shared_scratchpad.game_state.count_down_timer("display_text", 1.5, "<p>You got a heart!<p><p class='gain-life-msg'>Lives +1</p>");
+              this.shared_scratchpad.game_state.lives_amount += 1;
+              var heartAudio = new Audio('sound/Mario_Extra_Life.mp3');
+              heartAudio.play();
+            } else if (this.shared_scratchpad.game_state.lives_amount >= 3) {
+              this.shared_scratchpad.game_state.count_down_timer("display_text", 1.5, "<p>Max lives reached</p>");
+            }
+            return true;
           }
-        //}
+        }
+        if (this.shared_scratchpad.game_state.lives_amount == 0) {
+          this.shared_scratchpad.game_state.flag_timers.display_text = Number.MAX_SAFE_INTEGER;
+          isDead = true;
+        }
+        return false;
       },
-      'collision_detection': function(shape, gameObject) {
+      'collision_detection': function(gameObject) {
+        var shape = gameObject[0];
+
+        if (shape.class_name === "Shape_From_File" && shape.filename.toString() == "images/ring.obj")
+          return;
+
         if (colliderCount == 0 || shape.class_name === "Regular_2D_Polygon") {
           //collision detection
           var collider = mult(inverse(rocketSphere), model_transform);
@@ -571,17 +589,17 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
             var dist = length(vec3(c[0], c[1], c[2]));
 
             var checker;
-            if (!(shape.class_name === "Shape_From_File"))
+            if (shape.class_name === Regular_2D_Polygon)
               checker = ringColliderSphere;
             else
               checker = colliderSphere;
 
             if (dist < checker) {
-              this.collider_activity(shape, gameObject);
-              break;
+              return this.collider_activity(gameObject);
             }
           }
         }
+        return false;
       },
       'get_oscillations': function(oscType, offset) {
         var oscx = 0;
@@ -674,13 +692,11 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
         model_transform = mult(translation(pos[0] + oscx, pos[1] + oscy, zpos), model_transform);
 
-        this.collision_detection(shape, gameObject);
-
-        if (colliderCount != 0) {
-
-          colliderCount++;
-          if (colliderCount == 800)
-            colliderCount = 0;
+        if (this.collision_detection(gameObject)){
+          // remove life object
+          iterator.data = iterator.next.data;
+          iterator.next = iterator.next.next;
+          continue;
         }
 
         if (isDead) {
@@ -700,9 +716,15 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         iterator = iterator.next;
       }
 
+      if (colliderCount != 0) {
+          colliderCount++;
+          if (colliderCount == 150)
+            colliderCount = 0;
+      }
+
       if (pointBuffer != 0) {
         pointBuffer++;
-        if (pointBuffer == 20)
+        if (pointBuffer == 50)
           pointBuffer = 0;
       }
     },
