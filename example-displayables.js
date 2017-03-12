@@ -18,6 +18,7 @@ var colliderCount = 0;
 var isDead = false;
 var pointBuffer = 0;
 var smokeParticle = [];
+var oscType = 0 // 0: still, 1: hor, 2: vert, 3: spiral
 
 function initSmokeParticles(bt, spaceship_transform) {
   // smokeParticle = [];
@@ -46,16 +47,16 @@ function Node(data) {
     this.next = null;
 }
 
-function add_object_helper(shape, material, time, position, speed){
+function add_object_helper(shape, material, time, position, speed, transform, osc){
   if (head == null){
-    head = new Node([shape, material, time, position, speed]);
+    head = new Node([shape, material, time, position, speed, transform, osc]);
   }
   else if (head.next == null){
-    head.next = new Node([shape, material, time, position, speed]);
+    head.next = new Node([shape, material, time, position, speed, transform, osc]);
     tail = head.next;
   }
   else{
-    tail.next = new Node([shape, material, time, position, speed]);
+    tail.next = new Node([shape, material, time, position, speed, transform, osc]);
     tail = tail.next;
   }
 }
@@ -449,8 +450,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         return Math.random() * (max - min) + min;
       }
 
-      function add_object(shape, material, position, speed = 60) {
-        add_object_helper(shape, material, graphics_state.animation_time, position, speed);
+      function add_object(shape, material, position, speed, transform = mat4(), osc = 0) {
+        add_object_helper(shape, material, graphics_state.animation_time, position, speed, transform, osc);
       }
 
       var graphics_state  = this.shared_scratchpad.graphics_state;
@@ -464,6 +465,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
       var randy = getRandomNumber(-20, 20);
 
       if (counter % ringRate == 0) {
+        var osc = 1;
         add_object(shapes_in_use.ring, ringTexture, vec3(randx, randy, -100), ringSpeed);
         add_object(shapes_in_use.collisionDisk, transparent, vec3(randx, randy, -100), ringSpeed);
       } else if (counter % asteroidRate == 0) {
@@ -501,7 +503,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
         shape = gameObject[0];
         material = gameObject[1];
-        model_transform = mat4();
+        model_transform = gameObject[5];
         model_transform = mult(translation(pos[0], pos[1], zpos), model_transform);
 
         if (colliderCount == 0 || shape.class_name === "Regular_2D_Polygon") {
