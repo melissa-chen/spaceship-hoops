@@ -47,6 +47,22 @@ canvas {
     text-align: center;
 }
 
+.health-container {
+    display: inline-block;
+}
+
+.health-bar {
+    display: inline-block;
+    width: 50px;
+    height: 15px;
+    background-color: red;
+}
+
+.health-bar:not(:last-child) {
+    border-color: white;
+    border-right: 2px solid;
+}
+
 /* ================= */
 #test {
     position: absolute;

@@ -678,7 +678,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           this.draw_shapes();
         }
 
-        if (!this.shared_scratchpad.game_state.flags["display_text"]) {
+        if (this.shared_scratchpad.game_state.flags["display_text"]) {
           var text = document.getElementById("input").value;
           console.log(text);
           this.shared_scratchpad.game_state.count_down_timer("display_text", 5, text);
@@ -701,8 +701,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           lives: document.getElementById("lives-text"),
           display_text: document.getElementById("main-display-text")
         });
-        this.shared_scratchpad.game_state = {score_amount: 0, lives_amount: 1, display_text: "hi world"};
-        this.shared_scratchpad.game_state.flags = {"asteroid": true, "ring": true, "display_text": false};
+        this.shared_scratchpad.game_state = {score_amount: 0, lives_amount: 3, display_text: "hi world"};
+        this.shared_scratchpad.game_state.flags = {"asteroid": true, "ring": true, "display_text": true};
         this.shared_scratchpad.game_state.flag_timers = {"asteroid": Number.MAX_SAFE_INTEGER, "ring": Number.MAX_SAFE_INTEGER, "display_text": Number.MAX_SAFE_INTEGER};
         this.shared_scratchpad.game_state.count_down_timer = function(object, count_down_time, text_string = "") {
           var currTime = new Date();
@@ -725,7 +725,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
       },
       'display': function (time) {
         this.score.innerHTML = "Score: " + this.shared_scratchpad.game_state.score_amount;
-        this.lives.innerHTML = "Lives: " + this.shared_scratchpad.game_state.lives_amount;
+        this.lives.innerHTML = "Lives: " + "<div class='health-container'>" + "<div class='health-bar'></div>".repeat(this.shared_scratchpad.game_state.lives_amount) + "</div>";
         this.display_text.innerHTML = this.shared_scratchpad.game_state.display_text;
         this.update_timers();
       }
