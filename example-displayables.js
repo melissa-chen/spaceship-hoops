@@ -515,11 +515,12 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
               colliderCount++;
               if (this.shared_scratchpad.game_state.lives_amount > 0) {
                 if (shape.class_name === "Sphere") {
+                  this.shared_scratchpad.game_state.count_down_timer("display_text", 1.5, "OWWW YOU HIT AN ASTEROID!!!!! AKJSDLFAJDLKF");
                   this.shared_scratchpad.game_state.lives_amount -= 1;
                 }
                 if (this.shared_scratchpad.game_state.lives_amount == 0) {
+                  this.shared_scratchpad.game_state.flag_timers.display_text = Number.MAX_SAFE_INTEGER;
                   isDead = true;
-                  console.log("we dead");
                   break;
                 }
                 break;
@@ -536,7 +537,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         }
 
         if (isDead) {
-          this.shared_scratchpad.game_state.display_text = "GAME OVER";
+          this.shared_scratchpad.game_state.display_text = "rekt</br>press R to start agin";
           this.shared_scratchpad.animate = false;
         }
 
@@ -674,11 +675,6 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         }
         this.smoke();
 
-        if (this.shared_scratchpad.game_state.flags["display_text"]) {
-          var text = document.getElementById("input").value;
-          console.log(text);
-          this.shared_scratchpad.game_state.count_down_timer("display_text", 5, text);
-        }
     }
   }, Animation );
 
@@ -697,7 +693,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           lives: document.getElementById("lives-text"),
           display_text: document.getElementById("main-display-text")
         });
-        this.shared_scratchpad.game_state = {score_amount: 0, lives_amount: 3, display_text: "hi world"};
+        this.shared_scratchpad.game_state = {score_amount: 0, lives_amount: 3, display_text: ""};
         this.shared_scratchpad.game_state.flags = {"asteroid": true, "ring": true, "display_text": true};
         this.shared_scratchpad.game_state.flag_timers = {"asteroid": Number.MAX_SAFE_INTEGER, "ring": Number.MAX_SAFE_INTEGER, "display_text": Number.MAX_SAFE_INTEGER};
         this.shared_scratchpad.game_state.count_down_timer = function(object, count_down_time, text_string = "") {
@@ -716,12 +712,15 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           if (this.shared_scratchpad.game_state.flag_timers[flag] < currTime) {
             this.shared_scratchpad.game_state.flags[flag] ^= 1;
             this.shared_scratchpad.game_state.flag_timers[flag] = Number.MAX_SAFE_INTEGER;
+            if (flag == "display_text") {
+              this.shared_scratchpad.game_state.display_text = "";
+            }
           }
         }
       },
       'display': function (time) {
         this.score.innerHTML = "Score: " + this.shared_scratchpad.game_state.score_amount;
-        this.lives.innerHTML = "Lives: " + "<div class='health-container'>" + "<div class='health-bar'></div>".repeat(this.shared_scratchpad.game_state.lives_amount) + "</div>";
+        this.lives.innerHTML = "Health: " + "<div class='health-container'>" + "<div class='health-bar'></div>".repeat(this.shared_scratchpad.game_state.lives_amount) + "</div>";
         this.display_text.innerHTML = this.shared_scratchpad.game_state.display_text;
         this.update_timers();
       }
