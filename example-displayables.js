@@ -5,13 +5,11 @@
 // Now go down to Example_Animation's display() function to see where the sample shapes you see drawn are coded, and a good place to begin filling in your own code.
 
 var spaceship_transform = mat4();
-var posOffset = [];
-var gameObjects = [];
 var counter = 1;
 var head, tail;
 var heartCounter = 0;
-var ringRate = 220, asteroidRate = 70, heartRate = 1500;
-var ringSpeed = 50.0, asteroidSpeed = 50.0;
+var ringRate = 220, asteroidRate = 50, heartRate = 1500;
+var ringSpeed = 50.0, asteroidSpeed = 43.0;
 var rocketSphere;
 var colliderSphere = 4.2;
 var ringColliderSphere = 1.3;
@@ -116,13 +114,11 @@ function handleKeyUp(event){
 
 function reset_values(){
   spaceship_transform = mat4();
-  posOffset = [];
-  gameObjects = [];
   counter = 1;
   head = null;
   tail = null;
-  ringRate = 220, asteroidRate = 100;
-  ringSpeed = 60.0, asteroidSpeed = 60.0;
+  ringRate = 220, asteroidRate = 50;
+  ringSpeed = 60.0, asteroidSpeed = 43.0;
   rocketSphere;
   colliderSphere = 4.2;
   ringColliderSphere = 1.3;
@@ -454,12 +450,9 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         }
 
         heartCounter++;
-        console.log(heartCounter);
         if (heartCounter == heartRate) {
-          console.log("should spawn a life?");
           var shouldSpawn = getRandomNumber(0, 100);
           if(shouldSpawn <= 35){
-            console.log("spawned a life");
             randx = getRandomNumber(spaceship_transform[0][3]-50, spaceship_transform[0][3]+50);
             getRandomNumber(spaceship_transform[1][3]-20, spaceship_transform[1][3]+20);
             var heart_transform = mult( model_transform, rotation( 90, 0, 1, 0 ) );
@@ -469,10 +462,9 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           heartCounter = 0;
         }
 
-        if (asteroidRate > 20 && counter == 1000) {
-          // console.log("leveling up");
-          asteroidRate -= 11;
-          asteroidSpeed -= 5;
+        if (asteroidRate >= 20 && counter == 1000) {
+          asteroidRate -= 10;
+          asteroidSpeed -= 7;
           ringSpeed -= 3;
           ringRate -= 4;
           counter = 0;
@@ -491,13 +483,6 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           var ship_x = playerlocationx/100;
           var ship_y = playerlocationy/100;
 
-          console.log(obj_speed);
-          console.log(ship_x);
-          console.log(ship_y);
-          console.log("-----");
-          console.log(obj_x);
-          console.log(obj_y);
-          console.log("-----");
 
           // left: -1, right: 1, down: -1, up: 1
           //check if ship on left or right
@@ -505,18 +490,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           //check if ship on up or down
           var up_down = ship_y < obj_y ? -1 : 1;
 
-          console.log("-----");
-          console.log(left_right);
-          console.log("-----");
-          console.log(up_down);
-
           var x_displacement = Math.abs(ship_x - obj_x);
           var y_displacement = Math.abs(ship_y - obj_y);
-
-          console.log("-----");
-          console.log(x_displacement);
-          console.log(y_displacement);
-          console.log("-----");
 
           playerlocationx += (left_right * x_displacement * obj_speed / 120) * 100;
           playerlocationy += (up_down * y_displacement * obj_speed / 120) * 100;
