@@ -120,6 +120,8 @@ function reset_values(){
   isDead = false;
   pointBuffer = 0;
   smokeParticle = [];
+  left_right_rotation = 0;
+  up_down_rotation = 0;
 
   playerlocationx = 0;
   playerlocationy = 0;
@@ -274,8 +276,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           reset_values();
           this.shared_scratchpad.animate = true;
           this.shared_scratchpad.game_state.score_amount = 0;
-          this.shared_scratchpad.game_state.lives_amount = 1;
-          this.shared_scratchpad.game_state.display_text = "hi world";
+          this.shared_scratchpad.game_state.lives_amount = 3;
+          this.shared_scratchpad.game_state.display_text = "";
         })
       },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
@@ -416,6 +418,56 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
       },
       'create_game_objects': function () {
       // ************ GAME OBJECTS ********** //
+      function collisionPhysics(object, shared_scratchpad) {
+        var obj_pos = object[3];
+        var obj_x = obj_pos[0];
+        var obj_y = obj_pos[1];
+        var obj_speed = object[4];
+
+        var ship_x = playerlocationx/100;
+        var ship_y = playerlocationy/100;
+
+        console.log(obj_speed);
+        console.log(ship_x);
+        console.log(ship_y);
+        console.log("-----");
+        console.log(obj_x);
+        console.log(obj_y);
+        console.log("-----");
+
+        // left: -1, right: 1, down: -1, up: 1
+        //check if ship on left or right
+        var left_right = ship_x < obj_x ? -1 : 1;
+        //check if ship on up or down
+        var up_down = ship_y < obj_y ? -1 : 1;
+
+        console.log("-----");
+        console.log(left_right);
+        console.log("-----");
+        console.log(up_down);
+
+        var x_displacement = Math.abs(ship_x - obj_x);
+        var y_displacement = Math.abs(ship_y - obj_y);
+
+        console.log("-----");
+        console.log(x_displacement);
+        console.log(y_displacement);
+        console.log("-----");
+        
+        playerlocationx += (left_right * x_displacement * obj_speed / 120) * 100;
+        playerlocationy += (up_down * y_displacement * obj_speed / 120) * 100;
+
+        xforce *= -1 * .5;
+        yforce *= -1 * .5;
+        pixelx *= -1 * .5;
+        pixely *= -1 * .5;
+
+        left_right_rotation += -1* (left_right * x_displacement * 15);
+        up_down_rotation += -1 * (up_down * y_displacement * 12);
+
+        shared_scratchpad.game_state.count_down_timer("collision_recover", 0, "", 650);
+      }
+
       function getRandomNumber(min, max) {
         return Math.random() * (max - min) + min;
       }
@@ -491,7 +543,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         material = gameObject[1];
         model_transform = gameObject[5];
         oscType = gameObject[6];
-        console.log(oscType);
+        // console.log(oscType);
         oscx = 0;
         oscy = 0;
         if(oscType == 1) {  // horiztonal
@@ -544,8 +596,9 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
                 if (shape.class_name === "Sphere") {
                   this.shared_scratchpad.game_state.count_down_timer("display_text", 1.5, "OWWW YOU HIT AN ASTEROID!!!!! AKJSDLFAJDLKF");
                   this.shared_scratchpad.game_state.lives_amount -= 1;
-                    var audio = new Audio('sound/Junk_Crash.mp3');
-                    audio.play();
+                  collisionPhysics(gameObject, this.shared_scratchpad);
+                  var audio = new Audio('sound/Junk_Crash.mp3');
+                  audio.play();
                 }
                 if (this.shared_scratchpad.game_state.lives_amount == 0) {
                   this.shared_scratchpad.game_state.flag_timers.display_text = Number.MAX_SAFE_INTEGER;
@@ -592,31 +645,53 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           return num < 0 ? num + zero_diff : num > 0 ? num - zero_diff : num;
         }
 
-        if (key_left){
-          left_right_rotation += 1.3;
-          pixelx = (pixelx > 0) ? 0 : pixelx; 
-          xforce = (xforce > 0) ? 0 : xforce;
-          xforce--;
-        }
-        if (key_right){
-          left_right_rotation -= 1.3;
-          pixelx = (pixelx < 0) ? 0 : pixelx; 
-          xforce = (xforce < 0) ? 0 : xforce;
-          xforce++;
-        }
-        if (key_down){
-          up_down_rotation -= 0.8;
-          pixely = (pixely > 0) ? 0 : pixely; 
-          yforce = (yforce > 0) ? 0 : yforce;
-          yforce--;
-        }
-        if (key_up){
-          up_down_rotation += 0.8;
-          pixely = (pixely < 0) ? 0 : pixely; 
-          yforce = (yforce < 0) ? 0 : yforce;
-          yforce++;
-        }
+        if (this.shared_scratchpad.game_state.flags.collision_recover) {
 
+          if (key_left){
+            left_right_rotation += 1.3;
+            pixelx = (pixelx > 0) ? 0 : pixelx; 
+            xforce = (xforce > 0) ? 0 : xforce;
+            xforce--;
+          }
+          if (key_right){
+            left_right_rotation -= 1.3;
+            pixelx = (pixelx < 0) ? 0 : pixelx; 
+            xforce = (xforce < 0) ? 0 : xforce;
+            xforce++;
+          }
+          if (key_down){
+            up_down_rotation -= 0.8;
+            pixely = (pixely > 0) ? 0 : pixely; 
+            yforce = (yforce > 0) ? 0 : yforce;
+            yforce--;
+          }
+          if (key_up){
+            up_down_rotation += 0.8;
+            pixely = (pixely < 0) ? 0 : pixely; 
+            yforce = (yforce < 0) ? 0 : yforce;
+            yforce++;
+          }
+
+          // abrupt stop
+          if (!key_left && !key_right){
+            pixelx = 0;
+            xforce = 0;
+          }
+
+          if (!key_down && !key_up){
+            pixely = 0;
+            yforce = 0;
+          }
+
+          // reset ship rotation if no keys are pressed
+          if (!(key_left && key_right)) {
+            left_right_rotation = descent(left_right_rotation);
+          }
+          if (!(key_down && key_up)) {
+            up_down_rotation = descent(up_down_rotation);
+          }
+
+        }
         // handle acceleration
         xforce = clamp(xforce, -1*maxspeed, maxspeed);
         yforce = clamp(yforce, -1*maxspeed, maxspeed);
@@ -629,30 +704,9 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         left_right_rotation = clamp(left_right_rotation, -25, 25);
         up_down_rotation = clamp(up_down_rotation, -10, 10);
 
-        // reset ship rotation if no keys are pressed
-        if (!(key_left && key_right)) {
-          left_right_rotation = descent(left_right_rotation);
-        }
-        if (!(key_down && key_up)) {
-          up_down_rotation = descent(up_down_rotation);
-        }
-
-        // abrupt stop
-        if (!key_left && !key_right){
-           pixelx = 0;
-           xforce = 0;
-        }
-        else{
-           pixelx += xforce;
-        }
-
-        if (!key_down && !key_up){
-           pixely = 0;
-           yforce = 0;
-        }
-        else{
-          pixely += yforce;
-        }
+        pixelx += xforce;
+        pixely += yforce;
+        
 
     },
     'display': function(time)
@@ -730,13 +784,13 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           lives: document.getElementById("lives-text"),
           display_text: document.getElementById("main-display-text")
         });
-        this.shared_scratchpad.game_state = {score_amount: 0, lives_amount: 3, display_text: ""};
-        this.shared_scratchpad.game_state.flags = {"asteroid": true, "ring": true, "display_text": true};
-        this.shared_scratchpad.game_state.flag_timers = {"asteroid": Number.MAX_SAFE_INTEGER, "ring": Number.MAX_SAFE_INTEGER, "display_text": Number.MAX_SAFE_INTEGER};
-        this.shared_scratchpad.game_state.count_down_timer = function(object, count_down_time, text_string = "") {
+        this.shared_scratchpad.game_state = {score_amount: 0, lives_amount: 5, display_text: ""};
+        this.shared_scratchpad.game_state.flags = {"asteroid": true, "ring": true, "display_text": true, "collision_recover": true};
+        this.shared_scratchpad.game_state.flag_timers = {"asteroid": Number.MAX_SAFE_INTEGER, "ring": Number.MAX_SAFE_INTEGER, "display_text": Number.MAX_SAFE_INTEGER, "collision_recover": Number.MAX_SAFE_INTEGER};
+        this.shared_scratchpad.game_state.count_down_timer = function(object, count_down_time, text_string = "", count_down_time_ms = 0) {
           var currTime = new Date();
           context.shared_scratchpad.game_state.flags[object] ^= 1;
-          currTime.setSeconds(currTime.getSeconds() + count_down_time);
+          currTime.setSeconds(currTime.getSeconds() + count_down_time, count_down_time_ms);
           context.shared_scratchpad.game_state.flag_timers[object] = currTime;
           if (text_string != ""){
             context.shared_scratchpad.game_state.display_text = text_string;
