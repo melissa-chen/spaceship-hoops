@@ -12,7 +12,7 @@ git tag
 | Melissa Chen  |               |
 | Howard Huang  |               |   
 | Peter Kim     |   204271299   |  
-| Paulina Lei   |               |
+| Paulina Lei   |   004403130   |
 | Brandon Pon   |               |
 
 ## Game
