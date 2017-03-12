@@ -396,7 +396,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
       'spawn_objects': function(){
 
         var graphics_state  = this.shared_scratchpad.graphics_state;
-        
+
         function getRandomNumber(min, max) {
           return Math.random() * (max - min) + min;
         }
@@ -455,11 +455,21 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         }
         colliderCount++;
         //if (this.shared_scratchpad.game_state.lives_amount > 0) {
-          if (shape.class_name === "Sphere") {
-            this.shared_scratchpad.game_state.count_down_timer("display_text", 1.5, "OWWW YOU HIT AN ASTEROID!!!!! AKJSDLFAJDLKF");
-            this.shared_scratchpad.game_state.lives_amount -= 1;
+          if (shape.class_name === "Shape_From_File") {
+            var image = shape.filename.toString();
+            if (image == "images/asteroid27.obj") {
+              this.shared_scratchpad.game_state.count_down_timer("display_text", 1.5, "You hit an asteroid!</br>Lives -1");
+              this.shared_scratchpad.game_state.lives_amount -= 1;
               var audio = new Audio('sound/Junk_Crash.mp3');
               audio.play();
+            } else if (image == "images/Heart.obj") {
+              if (this.shared_scratchpad.game_state.lives_amount < 3)
+                this.shared_scratchpad.game_state.count_down_timer("display_text", 1.5, "You got a heart!</br>Lives +1"); {
+                this.shared_scratchpad.game_state.lives_amount += 1;
+                var heartAudio = new Audio('sound/Mario_Extra_Life.mp3');
+                heartAudio.play();
+              }
+            }
           }
           if (this.shared_scratchpad.game_state.lives_amount == 0) {
             this.shared_scratchpad.game_state.flag_timers.display_text = Number.MAX_SAFE_INTEGER;
@@ -478,7 +488,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
             var dist = length(vec3(c[0], c[1], c[2]));
 
             var checker;
-            if (!(shape.class_name === "Sphere"))
+            if (!(shape.class_name === "Shape_From_File"))
               checker = ringColliderSphere;
             else
               checker = colliderSphere;
@@ -536,13 +546,13 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
       },
       'create_game_objects': function () {
       // ************ GAME OBJECTS ********** //
-      
+
 
 
         gl.enable(gl.BLEND);
         // gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 
-      
+
 
       var graphics_state  = this.shared_scratchpad.graphics_state;
 
@@ -571,11 +581,10 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         material = gameObject[1];
         model_transform = gameObject[5];
         oscType = gameObject[6];
-        console.log(oscType);
         oscArray = this.get_oscillations(oscType, offset);
         oscx = oscArray[0];
         oscy = oscArray[1];
-        
+
         model_transform = mult(translation(pos[0] + oscx, pos[1] + oscy, zpos), model_transform);
 
         this.collision_detection(shape);
@@ -583,12 +592,12 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         if (colliderCount != 0) {
 
           colliderCount++;
-          if (colliderCount == 500)
+          if (colliderCount == 800)
             colliderCount = 0;
         }
 
         if (isDead) {
-          this.shared_scratchpad.game_state.display_text = "rekt</br>press R to start agin";
+          this.shared_scratchpad.game_state.display_text = "GAME OVER</br>Press R restart";
           this.shared_scratchpad.animate = false;
         }
 
