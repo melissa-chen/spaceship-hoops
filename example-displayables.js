@@ -666,17 +666,13 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
         if (!isDead) {
           this.spaceship_controls();
-          if (key_left || key_up || key_right || key_down) {
-            initSmokeParticles(t, spaceship_transform);
-          }
-          this.smoke();
+          initSmokeParticles(t, spaceship_transform);
           this.create_game_objects();
           this.shared_scratchpad.game_state.score_amount++;
-        }
-        else {
-          this.smoke();
+        }else {
           this.draw_shapes();
         }
+        this.smoke();
 
         if (!this.shared_scratchpad.game_state.flags["display_text"]) {
           var text = document.getElementById("input").value;
