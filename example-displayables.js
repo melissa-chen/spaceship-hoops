@@ -41,7 +41,6 @@ function initSmokeParticles(bt, spaceship_transform) {
   //console.log("There are " + smokeParticle.length + " smoke particles!");
 }
 
-
 function Node(data) {
     this.data = data;
     this.next = null;
@@ -370,8 +369,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
          model_transform = mult(model_transform, translation(prescale * 9 * Math.pow(-1, i), prescale * 0, prescale * -1));
          model_transform = mult( model_transform, scale(prescale * .8, prescale * .8, prescale * 1) );
          if (colliderCount == 0)
-         shapes_in_use.sphere.draw( graphics_state, model_transform, icyGray);
-        else
+          shapes_in_use.sphere.draw( graphics_state, model_transform, icyGray);
+         else
           shapes_in_use.sphere.draw(graphics_state, model_transform, collidedRed);
          }
 
@@ -450,6 +449,10 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         return Math.random() * (max - min) + min;
       }
 
+
+        gl.enable(gl.BLEND);
+        // gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+
       function add_object(shape, material, position, speed, transform = mat4(), osc = 0) {
         add_object_helper(shape, material, graphics_state.animation_time, position, speed, transform, osc);
       }
@@ -459,7 +462,6 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
       var ringTexture = new Material(Color(1, 1, 0, 1), .4, .8, .9, 50),
         transparent = new Material(Color(0, 0, 0, 0), 0, 0, 0, 0)
       asteroidTexture = new Material(Color(1, 1, 1, 1), .4, .8, .9, 50, "images/asteroid.jpg");
-
 
       var randx = getRandomNumber(-50, 50);
       var randy = getRandomNumber(-20, 20);
@@ -630,7 +632,6 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         shaders_in_use[ "Bump_Mapping" ].activate();
         // shaders_in_use[ "Plasma_Shader" ].activate();
 
-
         gl.enable(gl.BLEND);
         // gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 
@@ -664,6 +665,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
         var prescale = .35;  // control spaceship size
         this.spaceship(spaceship_transform, graphics_state, prescale);  // specify position, etc with model_transform
+
 
         if (!isDead) {
           this.spaceship_controls();

@@ -1,30 +1,52 @@
 canvas {
-    position: absolute;
+    /*position: absolute;
     top: 0px;
-    left: 0px;
-    z-index: -1;
+    left: 0px;*/
+    display: block;
+    margin: auto;
+    z-index: -100;
+}
+
+.canvas {
+  position: fixed;
+  z-index: -1;
+}
+
+.outer-canvas {
+  max-width: 90vw;
+  max-height: 80vh;
+  display: block;
+  margin: auto;
 }
 
 #score-text {
     color: white;
     position: absolute;
-    top: 10px;
-    left: 10px;
+    font-family: 'Press Start 2P', cursive;
+    top: 5%;
+    left: 5%;
 }
 
 #lives-text {
     color: white;
     position: absolute;
-    top: 70px;
-    left: 10px;
+    font-family: 'Press Start 2P', cursive;
+    top: 10%;
+    left: 5%;
 }
 
 #main-display-text{
     color: white;
     position: absolute;
-    font-size: 30px;
-    top: 40px;
-    left: 530px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 20px;
+    margin: 0;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    /*top: 40px;
+    left: 530px;*/
+    text-align: center;
 }
 
 /* ================= */
