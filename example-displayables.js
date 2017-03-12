@@ -19,11 +19,8 @@ var isDead = false;
 var pointBuffer = 0;
 var smokeParticle = [];
 
-// var gameInPlay = false;
-
-function initSmokeParticles(bt, spaceship_transform) {
+function initSmokeParticles(numParticles, bt, spaceship_transform, color) {
   // smokeParticle = [];
-  var numParticles = 2;
   for (var i = 0; i < numParticles; i++) {
     var sx = Math.cos(Math.random() * 2 * Math.PI);
     var sy = Math.cos(Math.random() * 2 * Math.PI);
@@ -34,12 +31,11 @@ function initSmokeParticles(bt, spaceship_transform) {
 
     smokeParticle.push({
       startTransform: mult(spaceship_transform, translation(sx, sy, sz+5.5)),
+      color: color,
       delta: [dx, dy, dz],
       birthTime: bt
     });
   }
-
-  //console.log("There are " + smokeParticle.length + " smoke particles!");
 }
 
 window.onload = function() {
@@ -377,9 +373,9 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
       },
     'smoke' : function () {
-        var time = this.shared_scratchpad.graphics_state.animation_time/1000;
         var graphics_state = this.shared_scratchpad.graphics_state;
-        var smokeTexture = new Material(Color(0, 0, 0, 0), 0.2, .1, .2, 50 , "images/smoke.gif");
+        var time = graphics_state.animation_time/1000;
+        var smokeTexture;
         // var smokeTexture = new Material ( Color(1, 1, 1, 1), .4, .8, .9, 50, "images/asteroid.jpg");
 
         var i = 0;
@@ -391,20 +387,169 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
             smokeScale = 0;
           }
 
-          model_transform = mult(model_transform, scale(smokeScale * 3, smokeScale * 3, smokeScale * 3) );
+          model_transform = mult(model_transform, scale(smokeScale * 3, smokeScale * 3, smokeScale * 3));
+          if (smokeParticle[i].color == "grey") {
+            smokeTexture = new Material(Color(0, 0, 0, 0), 0.2, .1, .2, 50 , "images/smoke.gif");
+          } else if (smokeParticle[i].color == "red") {
+            smokeTexture = new Material(Color(1, 0, 0, 1), 0.7, .1, .2, 50);
+          } else if (smokeParticle[i].color == "green") {
+            smokeTexture = new Material(Color(0, 1, 0, 1), 0.7, .1, .2, 50);
+          }
           // shapes_in_use.triangle.draw(graphics_state, model_transform, smokeTexture); // ver.1
           shapes_in_use.square.draw(graphics_state, model_transform, smokeTexture); // ver.2
-          // shapes_in_use.smoke.draw(graphics_state, model_transform, smokeTexture);
+          // shapes_in_use.smoke.draw(graphics_state, model_transform, smokeTexture); // ver.3
 
           smokeParticle[i].startTransform = mult(smokeParticle[i].startTransform, translation(smokeParticle[i].delta[0],smokeParticle[i].delta[1],smokeParticle[i].delta[2]));
 
-          if (smokeScale <= 0) {
+          if (smokeScale <= 0) {  // prune particles that are no longer alive
             smokeParticle.splice(i,1);
           } else {
             i++;
           }
         }
 
+      },
+      'spawn_objects': function(){
+
+        var graphics_state  = this.shared_scratchpad.graphics_state;
+
+        function getRandomNumber(min, max) {
+          return Math.random() * (max - min) + min;
+        }
+
+        function add_object(shape, material, position, speed, transform = mat4(), osc = 0) {
+          add_object_helper(shape, material, graphics_state.animation_time, position, speed, transform, osc);
+        }
+
+        var ringTexture = new Material(Color(1, 1, 0, 1), .4, .8, .9, 50),
+        transparent = new Material(Color(0, 0, 0, 0), 0, 0, 0, 0)
+        asteroidTexture = new Material(Color(1, 1, 1, 1), .4, .8, .9, 50, "images/asteroid.jpg"),
+        ring_material = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/gold.jpg")
+        heart_material = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/red.jpg");
+        asteroid_material = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/asteroid.jpg");
+
+        // var randx = getRandomNumber(-50, 50);
+        // var randy = getRandomNumber(-20, 20);
+        var randx = getRandomNumber(spaceship_transform[0][3]-50, spaceship_transform[0][3]+50);
+        var randy = getRandomNumber(spaceship_transform[1][3]-20, spaceship_transform[1][3]+20);
+
+        if (counter % ringRate == 0) {
+          var osc = Math.floor(getRandomNumber(0, 6));
+
+          var ring_transform = mult( mat4(), rotation( 90, 0, 1, 0 ) );
+          ring_transform = mult(ring_transform, scale(5.5, 5.5, 5.5));
+
+          var heart_transform = mult( model_transform, rotation( 90, 0, 1, 0 ) );
+          heart_transform = mult(heart_transform, scale(2, 2, 2));
+
+          add_object(shapes_in_use.ringobj, ring_material, vec3(randx, randy, -100), ringSpeed, ring_transform, osc);
+          add_object(shapes_in_use.heartobj, heart_material, vec3(randx, randy, -100), ringSpeed, heart_transform); // TODO: HEART INCREASE LIFE +1, RANDOM POSITION
+          add_object(shapes_in_use.collisionDisk, transparent, vec3(randx, randy, -100), ringSpeed, mat4(), osc);
+        } else if (counter % asteroidRate == 0) {
+          // randx = getRandomNumber(-50, 50);
+          randx = getRandomNumber(spaceship_transform[0][3]-50, spaceship_transform[0][3]+50);
+          // randy = getRandomNumber(-20, 20);
+          randy = getRandomNumber(spaceship_transform[1][3]-20, spaceship_transform[1][3]+20);
+          var asteroid_transform = mult(mat4(), scale(6,6,6));
+           add_object(shapes_in_use.asteroidobj, asteroid_material, vec3(randx, randy, -100), asteroidSpeed, asteroid_transform);
+          //add_object(shapes_in_use.asteroid, asteroidTexture, vec3(randx, randy, -100), asteroidSpeed);
+        }
+        if (asteroidRate > 20 && counter == 1000) {
+          // console.log("leveling up");
+          asteroidRate -= 11;
+          asteroidSpeed -= 5;
+          ringSpeed -= 3;
+          ringRate -= 4;
+          counter = 0;
+        }
+      },
+      'collider_activity': function(shape){
+        var t = this.shared_scratchpad.graphics_state.animation_time/1000;
+
+        if (shape.class_name === "Regular_2D_Polygon") {
+          if (pointBuffer == 0) {
+            this.shared_scratchpad.game_state.count_down_timer("display_text", 1.5, "<p class='point-msg'>+1000</p>");
+            this.shared_scratchpad.game_state.score_amount += 1000;
+            initSmokeParticles(20,t,spaceship_transform,"green");
+            var audio = new Audio('sound/Sonic_Ring.mp3');
+            audio.play();
+            pointBuffer++;
+          }
+          return;
+        }
+        colliderCount++;
+        //if (this.shared_scratchpad.game_state.lives_amount > 0) {
+          if (shape.class_name === "Shape_From_File") {
+            var image = shape.filename.toString();
+            if (image == "images/asteroid27.obj") {
+              this.shared_scratchpad.game_state.count_down_timer("display_text", 1.5, "<p class='lose-life-msg'>Lives -1</p>");
+              this.shared_scratchpad.game_state.lives_amount -= 1;
+              initSmokeParticles(20,t,spaceship_transform,"red");
+              var audio = new Audio('sound/Junk_Crash.mp3');
+              audio.play();
+            }
+            if (image == "images/Heart.obj") {
+              if (this.shared_scratchpad.game_state.lives_amount < 3) {
+                this.shared_scratchpad.game_state.count_down_timer("display_text", 1.5, "<p class='gain-life-msg'>Lives +1</p>");
+                this.shared_scratchpad.game_state.lives_amount += 1;
+                var heartAudio = new Audio('sound/Mario_Extra_Life.mp3');
+                heartAudio.play();
+              } else if (this.shared_scratchpad.game_state.lives_amount >= 3) {
+                this.shared_scratchpad.game_state.count_down_timer("display_text", 1.5, "<p>Max lives reached</p>");
+              }
+            }
+          }
+          if (this.shared_scratchpad.game_state.lives_amount == 0) {
+            this.shared_scratchpad.game_state.flag_timers.display_text = Number.MAX_SAFE_INTEGER;
+            isDead = true;
+            return;
+          }
+        //}
+      },
+      'collision_detection': function(shape) {
+        if (colliderCount == 0 || shape.class_name === "Regular_2D_Polygon") {
+          //collision detection
+          var collider = mult(inverse(rocketSphere), model_transform);
+          for (var i = 0; i < shape.positions.length; i++) {
+            var point = shape.positions[i];
+            var c = mult_vec(collider, vec4(point[0], point[1], point[2], 1));
+            var dist = length(vec3(c[0], c[1], c[2]));
+
+            var checker;
+            if (!(shape.class_name === "Shape_From_File"))
+              checker = ringColliderSphere;
+            else
+              checker = colliderSphere;
+
+            if (dist < checker) {
+              this.collider_activity(shape);
+              break;
+            }
+          }
+        }
+      },
+      'get_oscillations': function(oscType, offset) {
+        var oscx = 0;
+        var oscy = 0;
+        if(oscType == 1) {  // horiztonal
+          oscx = Math.sin((this.shared_scratchpad.graphics_state.animation_time - offset)/(speed*20)) * 12;
+        }
+        else if (oscType == 2) { // vertical
+          oscy = Math.cos((this.shared_scratchpad.graphics_state.animation_time - offset)/(speed*20)) * 12;
+        }
+        else if (oscType == 3) { // spiral
+          oscx = Math.sin((this.shared_scratchpad.graphics_state.animation_time - offset)/(speed*20)) * 12;
+          oscy = Math.cos((this.shared_scratchpad.graphics_state.animation_time - offset)/(speed*20)) * 12;
+        }
+        else if (oscType == 4) { // diag right left
+          oscx = Math.sin((this.shared_scratchpad.graphics_state.animation_time - offset)/(speed*20)) * 12;
+          oscy = Math.sin((this.shared_scratchpad.graphics_state.animation_time - offset)/(speed*20)) * 12;
+        }
+        else if (oscType == 5) { // diag left right
+          oscx = -Math.sin((this.shared_scratchpad.graphics_state.animation_time - offset)/(speed*20)) * 12;
+          oscy = Math.sin((this.shared_scratchpad.graphics_state.animation_time - offset)/(speed*20)) * 12;
+        }
+        return [oscx, oscy];
       },
       'draw_shapes': function() {
         var shape, material, offset, pos, zpos;
@@ -429,60 +574,21 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
       },
       'create_game_objects': function () {
       // ************ GAME OBJECTS ********** //
-      function getRandomNumber(min, max) {
-        return Math.random() * (max - min) + min;
-      }
+
 
 
         gl.enable(gl.BLEND);
         // gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 
-      function add_object(shape, material, position, speed, transform = mat4(), osc = 0) {
-        add_object_helper(shape, material, graphics_state.animation_time, position, speed, transform, osc);
-      }
+
 
       var graphics_state  = this.shared_scratchpad.graphics_state;
 
-      var ringTexture = new Material(Color(1, 1, 0, 1), .4, .8, .9, 50),
-        transparent = new Material(Color(0, 0, 0, 0), 0, 0, 0, 0)
-      asteroidTexture = new Material(Color(1, 1, 1, 1), .4, .8, .9, 50, "images/asteroid.jpg"),
-      ring_material = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/gold.jpg")
-      heart_material = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/red.jpg");
-      asteroid_material = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/asteroid.jpg");
-
-      var randx = getRandomNumber(-50, 50);
-      var randy = getRandomNumber(-20, 20);
-
-      if (counter % ringRate == 0) {
-        var osc = Math.floor(getRandomNumber(0, 6));
-
-        var ring_transform = mult( mat4(), rotation( 90, 0, 1, 0 ) );
-        ring_transform = mult(ring_transform, scale(5.5, 5.5, 5.5));
-
-        var heart_transform = mult( model_transform, rotation( 90, 0, 1, 0 ) );
-        heart_transform = mult(heart_transform, scale(2, 2, 2));
-
-        add_object(shapes_in_use.ringobj, ring_material, vec3(randx, randy, -100), ringSpeed, ring_transform, osc);
-        add_object(shapes_in_use.heartobj, heart_material, vec3(randx, randy, -100), ringSpeed, heart_transform); // TODO: HEART INCREASE LIFE +1, RANDOM POSITION
-        add_object(shapes_in_use.collisionDisk, transparent, vec3(randx, randy, -100), ringSpeed, mat4(), osc);
-      } else if (counter % asteroidRate == 0) {
-        randx = getRandomNumber(-50, 50);
-        randy = getRandomNumber(-20, 20);
-        var asteroid_transform = mult(mat4(), scale(10,10,10));
-        // add_object(shapes_in_use.asteroidobj, asteroid_material, vec3(randx, randy, -100), asteroidSpeed, asteroid_transform);
-        add_object(shapes_in_use.asteroid, asteroidTexture, vec3(randx, randy, -100), asteroidSpeed);
-      }
-      if (asteroidRate > 20 && counter == 1000) {
-        // console.log("leveling up");
-        asteroidRate -= 11;
-        asteroidSpeed -= 5;
-        ringSpeed -= 3;
-        ringRate -= 4;
-        counter = 0;
-      }
+      this.spawn_objects();
 
 
       var shape, material, offset, pos, zpos, oscx, oscy, oscType;
+      var oscArray = [];
       //oscType 0: still, 1: hor, 2: vert, 3: spiral, 4: diag rightleft 5: diag left right
       //gameobject:(shape, material, animationtime, startpos, speed, transform, oscType)
       var iterator = head;
@@ -491,7 +597,6 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         pos = gameObject[3];
         offset = gameObject[2];
         speed = gameObject[4];
-
         zpos = pos[2] + (graphics_state.animation_time - offset) / speed;
 
         if (zpos > 32 && iterator == head) {
@@ -504,87 +609,35 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         material = gameObject[1];
         model_transform = gameObject[5];
         oscType = gameObject[6];
-        console.log(oscType);
-        oscx = 0;
-        oscy = 0;
-        if(oscType == 1) {  // horiztonal
-          oscx = Math.sin((graphics_state.animation_time - offset)/(speed*20)) * 12;
-        }
-        else if (oscType == 2) { // vertical
-          oscy = Math.cos((graphics_state.animation_time - offset)/(speed*20)) * 12;
-        }
-        else if (oscType == 3) { // spiral
-          oscx = Math.sin((graphics_state.animation_time - offset)/(speed*20)) * 12;
-          oscy = Math.cos((graphics_state.animation_time - offset)/(speed*20)) * 12;
-        }
-        else if (oscType == 4) { // diag right left
-          oscx = Math.sin((graphics_state.animation_time - offset)/(speed*20)) * 12;
-          oscy = Math.sin((graphics_state.animation_time - offset)/(speed*20)) * 12;
-        }
-        else if (oscType == 5) { // diag left right
-          oscx = -Math.sin((graphics_state.animation_time - offset)/(speed*20)) * 12;
-          oscy = Math.sin((graphics_state.animation_time - offset)/(speed*20)) * 12;
-        }
+        oscArray = this.get_oscillations(oscType, offset);
+        oscx = oscArray[0];
+        oscy = oscArray[1];
 
         model_transform = mult(translation(pos[0] + oscx, pos[1] + oscy, zpos), model_transform);
 
-        if (colliderCount == 0 || shape.class_name === "Regular_2D_Polygon") {
-          //collision detection
-          var collider = mult(inverse(rocketSphere), model_transform);
-          for (var i = 0; i < shape.positions.length; i++) {
-            var point = shape.positions[i];
-            var c = mult_vec(collider, vec4(point[0], point[1], point[2], 1));
-            var dist = length(vec3(c[0], c[1], c[2]));
-
-            var checker;
-            if (!(shape.class_name === "Sphere"))
-              checker = ringColliderSphere;
-            else
-              checker = colliderSphere;
-
-            if (dist < checker) {
-              if (shape.class_name === "Regular_2D_Polygon") {
-                if (pointBuffer == 0) {
-                  this.shared_scratchpad.game_state.score_amount += 1000;
-                  var audio = new Audio('sound/Sonic_Ring.mp3');
-                  audio.play();
-                  pointBuffer++;
-                }
-                break;
-              }
-              colliderCount++;
-              if (this.shared_scratchpad.game_state.lives_amount > 0) {
-                if (shape.class_name === "Sphere") {
-                  this.shared_scratchpad.game_state.count_down_timer("display_text", 1.5, "OWWW YOU HIT AN ASTEROID!!!!! AKJSDLFAJDLKF");
-                  this.shared_scratchpad.game_state.lives_amount -= 1;
-                    var audio = new Audio('sound/Junk_Crash.mp3');
-                    audio.play();
-                }
-                if (this.shared_scratchpad.game_state.lives_amount == 0) {
-                  this.shared_scratchpad.game_state.flag_timers.display_text = Number.MAX_SAFE_INTEGER;
-                  isDead = true;
-                  break;
-                }
-                break;
-              }
-            }
-          }
-        }
+        this.collision_detection(shape);
 
         if (colliderCount != 0) {
 
           colliderCount++;
-          if (colliderCount == 500)
+          if (colliderCount == 800)
             colliderCount = 0;
         }
 
         if (isDead) {
-          this.shared_scratchpad.game_state.display_text = "rekt</br>press R to start agin";
+          this.shared_scratchpad.game_state.display_text = "GAME OVER</br>Press R restart";
           this.shared_scratchpad.animate = false;
         }
 
-        if (!(shape.class_name === "Regular_2D_Polygon"))
+
+        if (!(shape.class_name === "Regular_2D_Polygon")){
+            if (shape.filename.toString() == "images/asteroid27.obj"){
+              var rot = (graphics_state.animation_time - offset) / 30;
+          model_transform = mult(model_transform, rotation(rot , 1, 1, 0));
+        }
           shape.draw(graphics_state, model_transform, material);
+
+        }
         iterator = iterator.next;
       }
 
@@ -629,6 +682,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         // bounded movement range
         playerlocationx = clamp(playerlocationx + pixelx, -20000, 20000);
         playerlocationy = clamp(playerlocationy + pixely, -20000, 20000);
+        // playerlocationx = playerlocationx + pixelx;
+        // playerlocationy = playerlocationy + pixely;
 
         // bounded rotation range
         left_right_rotation = clamp(left_right_rotation, -25, 25);
@@ -646,23 +701,21 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         if (!key_left && !key_right){
            pixelx = 0;
            xforce = 0;
-        }
-        else{
+        } else {
            pixelx += xforce;
         }
 
         if (!key_down && !key_up){
            pixely = 0;
            yforce = 0;
-        }
-        else{
+        } else {
           pixely += yforce;
         }
 
     },
     'display': function(time)
       {
-        if (gameInPlay == true) {
+        if (gameInPlay == true){
           //this.shared_scratchpad.graphics_state.camera_transform = mult( rotation( 8, -1, 0, 0 ), this.shared_scratchpad.graphics_state.camera_transform );
           var graphics_state  = this.shared_scratchpad.graphics_state,
               model_transform = mat4();             // We have to reset model_transform every frame, so that as each begins, our basis starts as the identity.
@@ -710,13 +763,13 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
           if (!isDead) {
             this.spaceship_controls();
-            initSmokeParticles(t, spaceship_transform);
+            initSmokeParticles(2, t, spaceship_transform, "grey");
             this.create_game_objects();
             this.shared_scratchpad.game_state.score_amount++;
           }else {
             this.draw_shapes();
           }
-          this.smoke();
+            this.smoke();
         }
     }
   }, Animation );

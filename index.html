@@ -79,6 +79,7 @@ index.html - The web page document containing the canvas (drawing surface), that
   <!-- <div id="score-text">Score: </div>
   <div id="lives-text">Lives: </div> -->
   <span id="test">Put text here and it will display it using countdown timer <input id="input"></input></span>
+
   <div id="main-display-text"></div>
   <div id="score-text"> </div>
   <div id="lives-text"> </div>
@@ -89,7 +90,7 @@ index.html - The web page document containing the canvas (drawing surface), that
 
   <canvas id="gl-canvas" width="1200" height="600"></canvas>
 
-  <div id = "game-title">
+  <!-- <div id = "game-title">
     SPACESHIP HOOPS
   </div>
   <div id = "instructions-text">
@@ -97,7 +98,7 @@ index.html - The web page document containing the canvas (drawing surface), that
   </div>
   <div id = "play-text">
     Press ENTER to play
-  </div>
+  </div> -->
 
   <script>
     var instructions_visible = false;
@@ -116,24 +117,24 @@ index.html - The web page document containing the canvas (drawing surface), that
             if (instructions_visible == false) {
               gameInPlay = true;
               setImageVisible('start-screen', false);
-              setImageVisible('play-text', false);
-              setImageVisible('game-title', false);
-              setImageVisible('instructions-text', false);
+              // setImageVisible('play-text', false);
+              // setImageVisible('game-title', false);
+              // setImageVisible('instructions-text', false);
             }
             break;
           case 32: // Space key
             if (instructions_visible == false && gameInPlay == false) {
               setImageVisible('instructions-screen', true);
-              setImageVisible('play-text', false);
-              setImageVisible('game-title', false);
-              setImageVisible('instructions-text', false);
+              // setImageVisible('play-text', false);
+              // setImageVisible('game-title', false);
+              // setImageVisible('instructions-text', false);
               instructions_visible = true;
             }
             else if (instructions_visible == true && gameInPlay == false){
               setImageVisible('instructions-screen', false);
-              setImageVisible('play-text', true);
-              setImageVisible('game-title', true);
-              setImageVisible('instructions-text', true);
+              // setImageVisible('play-text', true);
+              // setImageVisible('game-title', true);
+              // setImageVisible('instructions-text', true);
               instructions_visible = false;
             }
             break;
