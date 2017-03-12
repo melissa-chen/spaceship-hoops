@@ -11,7 +11,7 @@ git tag
 | ------------- |:-------------:|
 | Melissa Chen  |               |
 | Howard Huang  |               |   
-| Peter Kim     |               |  
+| Peter Kim     |   204271299   |  
 | Paulina Lei   |               |
 | Brandon Pon   |               |
 
