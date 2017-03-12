@@ -21,7 +21,7 @@ var smokeParticle = [];
 
 function initSmokeParticles(bt, spaceship_transform) {
   // smokeParticle = [];
-  var numParticles = 1;
+  var numParticles = 2;
   for (var i = 0; i < numParticles; i++) {
     var sx = Math.cos(Math.random() * 2 * Math.PI);
     var sy = Math.cos(Math.random() * 2 * Math.PI);
@@ -39,7 +39,6 @@ function initSmokeParticles(bt, spaceship_transform) {
 
   //console.log("There are " + smokeParticle.length + " smoke particles!");
 }
-
 
 function Node(data) {
     this.data = data;
@@ -73,6 +72,8 @@ var xforce = 0;
 var yforce = 0;
 var pixelx = 0;
 var pixely = 0;
+var left_right_rotation = 0;
+var up_down_rotation = 0;
 var key_left = false;
 var key_right = false;
 var key_up = false;
@@ -101,6 +102,36 @@ function handleKeyUp(event){
     key_up = false;
   else if (event.keyCode == 40)
     key_down = false;
+}
+
+function reset_values(){
+  spaceship_transform = mat4();
+  posOffset = [];
+  gameObjects = [];
+  counter = 1;
+  head = null;
+  tail = null;
+  ringRate = 220, asteroidRate = 100;
+  ringSpeed = 60.0, asteroidSpeed = 60.0;
+  rocketSphere;
+  colliderSphere = 4.2;
+  ringColliderSphere = 1.3;
+  colliderCount = 0;
+  isDead = false;
+  pointBuffer = 0;
+  smokeParticle = [];
+
+  playerlocationx = 0;
+  playerlocationy = 0;
+  maxspeed = 4;
+  xforce = 0;
+  yforce = 0;
+  pixelx = 0;
+  pixely = 0;
+  key_left = false;
+  key_right = false;
+  key_up = false;
+  key_down = false;
 }
 
 Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayable object that our class Canvas_Manager can manage.  Displays a text user interface.
@@ -171,39 +202,6 @@ Declare_Any_Class( "Example_Camera",     // An example of a displayable object t
         controls.add( "i",     this, function() { this.thrust[2] =  1; } );     controls.add( "i",     this, function() { this.thrust[2] =  0; }, {'type':'keyup'} );
         controls.add( "o",     this, function() { this.thrust[2] =  -1; } );     controls.add( "o",     this, function() { this.thrust[2] =  0; }, {'type':'keyup'} );
 
-    //    control system to move the camera angle.  If the camera is attached to a planet, only the heading can be change left/right
-        // controls.add( "left",  this, function() {
-        //   spaceship_transform = mult( translation( -.5, 0, 0, 0 ), spaceship_transform );
-        //
-        //   if (leftRot <= maxRotations) {
-        //     leftRot++;
-        //     rightRot--;
-        //     var zRotationMatrix = mat4();
-        //     zRotationMatrix = mult(zRotationMatrix, rotation(-3, [0, 0, 1]));
-        //     spaceship_transform = mult(spaceship_transform, zRotationMatrix);
-        //   }
-        //
-        // });
-        // controls.add( "right",  this, function() {
-        //   spaceship_transform = mult( translation( .5, 0, 0, 0 ), spaceship_transform );
-        //
-        //   if (rightRot <= maxRotations) {
-        //     rightRot++;
-        //     leftRot--;
-        //     var zRotationMatrix = mat4();
-        //     zRotationMatrix = mult(zRotationMatrix, rotation(3, [0, 0, 1]));
-        //     spaceship_transform = mult(spaceship_transform, zRotationMatrix);
-        //   }
-        // });
-
-        //  TODO: limit camera up/down changes
-        // controls.add( "up",  this, function() {
-        //   this.graphics_state.camera_transform = mult( rotation( 2, -1, 0, 0 ), this.graphics_state.camera_transform );
-        // });
-        // controls.add( "down",  this, function() {
-        //   this.graphics_state.camera_transform = mult( rotation( 2, 1, 0, 0 ), this.graphics_state.camera_transform );
-        // });
-
       },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       { var C_inv = inverse( this.graphics_state.camera_transform ), pos = mult_vec( C_inv, vec4( 0, 0, 0, 1 ) ),
@@ -251,6 +249,9 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         shapes_in_use.ringCollisionSphere = new Sphere(5, 5, ringColliderSphere);
         shapes_in_use.collisionDisk = new Regular_2D_Polygon(15, 15, 4.5);
 
+        shapes_in_use.ringobj = new Shape_From_File( "images/ring.obj" );
+        shapes_in_use.heartobj = new Shape_From_File( "images/Heart.obj" );
+        shapes_in_use.asteroidobj = new Shape_From_File( "images/asteroid27.obj" );
 
         shapes_in_use.cylindrical_tube = new Cylindrical_Tube(5, 20);
         shapes_in_use.capped_cylinder = new Capped_Cylinder(5, 20);
@@ -269,8 +270,13 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         controls.add( "ALT+g", this, function() { this.shared_scratchpad.graphics_state.gouraud       ^= 1; } );   // Make the keyboard toggle some
         controls.add( "ALT+n", this, function() { this.shared_scratchpad.graphics_state.color_normals ^= 1; } );   // GPU flags on and off.
         controls.add( "ALT+a", this, function() { this.shared_scratchpad.animate                      ^= 1; } );
-        controls.add( "r", this, function() { rotationOffset =  this.shared_scratchpad.graphics_state.animation_time - rotationOffset;
-                                                rotate = !rotate; })
+        controls.add( "r", this, function() {
+          reset_values();
+          this.shared_scratchpad.animate = true;
+          this.shared_scratchpad.game_state.score_amount = 0;
+          this.shared_scratchpad.game_state.lives_amount = 1;
+          this.shared_scratchpad.game_state.display_text = "hi world";
+        })
       },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
@@ -334,8 +340,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
          model_transform = mult(model_transform, translation(prescale * 9 * Math.pow(-1, i), prescale * 0, prescale * -1));
          model_transform = mult( model_transform, scale(prescale * .8, prescale * .8, prescale * 1) );
          if (colliderCount == 0)
-         shapes_in_use.sphere.draw( graphics_state, model_transform, icyGray);
-        else
+          shapes_in_use.sphere.draw( graphics_state, model_transform, icyGray);
+         else
           shapes_in_use.sphere.draw(graphics_state, model_transform, collidedRed);
          }
 
@@ -360,8 +366,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
     'smoke' : function () {
         var time = this.shared_scratchpad.graphics_state.animation_time/1000;
         var graphics_state = this.shared_scratchpad.graphics_state;
-        // var smokeTexture = new Material(Color(0, 0, 0, 0), 1, .1, .2, 50 , "images/smoke.gif");
-        var smokeTexture = new Material ( Color(1, 1, 1, 1), .4, .8, .9, 50, "images/asteroid.jpg");
+        var smokeTexture = new Material(Color(0, 0, 0, 0), 0.2, .1, .2, 50 , "images/smoke.gif");
+        // var smokeTexture = new Material ( Color(1, 1, 1, 1), .4, .8, .9, 50, "images/asteroid.jpg");
 
         var i = 0;
         while (i < smokeParticle.length) {
@@ -374,8 +380,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
           model_transform = mult(model_transform, scale(smokeScale * 3, smokeScale * 3, smokeScale * 3) );
           // shapes_in_use.triangle.draw(graphics_state, model_transform, smokeTexture); // ver.1
-          // shapes_in_use.square.draw(graphics_state, model_transform, smokeTexture); // ver.2
-          shapes_in_use.smoke.draw(graphics_state, model_transform, smokeTexture);
+          shapes_in_use.square.draw(graphics_state, model_transform, smokeTexture); // ver.2
+          // shapes_in_use.smoke.draw(graphics_state, model_transform, smokeTexture);
 
           smokeParticle[i].startTransform = mult(smokeParticle[i].startTransform, translation(smokeParticle[i].delta[0],smokeParticle[i].delta[1],smokeParticle[i].delta[2]));
 
@@ -414,6 +420,10 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         return Math.random() * (max - min) + min;
       }
 
+
+        gl.enable(gl.BLEND);
+        // gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+
       function add_object(shape, material, position, speed, transform = mat4(), osc = 0) {
         add_object_helper(shape, material, graphics_state.animation_time, position, speed, transform, osc);
       }
@@ -422,19 +432,31 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
       var ringTexture = new Material(Color(1, 1, 0, 1), .4, .8, .9, 50),
         transparent = new Material(Color(0, 0, 0, 0), 0, 0, 0, 0)
-      asteroidTexture = new Material(Color(1, 1, 1, 1), .4, .8, .9, 50, "images/asteroid.jpg");
-
+      asteroidTexture = new Material(Color(1, 1, 1, 1), .4, .8, .9, 50, "images/asteroid.jpg"),
+      ring_material = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/gold.jpg")
+      heart_material = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/red.jpg");
+      asteroid_material = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/asteroid.jpg");
 
       var randx = getRandomNumber(-50, 50);
       var randy = getRandomNumber(-20, 20);
 
       if (counter % ringRate == 0) {
         var osc = Math.floor(getRandomNumber(0, 6));
-        add_object(shapes_in_use.ring, ringTexture, vec3(randx, randy, -100), ringSpeed, mat4(), osc);
+
+        var ring_transform = mult( mat4(), rotation( 90, 0, 1, 0 ) );
+        ring_transform = mult(ring_transform, scale(5.5, 5.5, 5.5));
+
+        var heart_transform = mult( model_transform, rotation( 90, 0, 1, 0 ) );
+        heart_transform = mult(heart_transform, scale(2, 2, 2));
+
+        add_object(shapes_in_use.ringobj, ring_material, vec3(randx, randy, -100), ringSpeed, ring_transform, osc);
+        add_object(shapes_in_use.heartobj, heart_material, vec3(randx, randy, -100), ringSpeed, heart_transform); // TODO: HEART INCREASE LIFE +1, RANDOM POSITION
         add_object(shapes_in_use.collisionDisk, transparent, vec3(randx, randy, -100), ringSpeed, mat4(), osc);
       } else if (counter % asteroidRate == 0) {
         randx = getRandomNumber(-50, 50);
         randy = getRandomNumber(-20, 20);
+        var asteroid_transform = mult(mat4(), scale(10,10,10));
+        // add_object(shapes_in_use.asteroidobj, asteroid_material, vec3(randx, randy, -100), asteroidSpeed, asteroid_transform);
         add_object(shapes_in_use.asteroid, asteroidTexture, vec3(randx, randy, -100), asteroidSpeed);
       }
       if (asteroidRate > 20 && counter == 1000) {
@@ -511,6 +533,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
               if (shape.class_name === "Regular_2D_Polygon") {
                 if (pointBuffer == 0) {
                   this.shared_scratchpad.game_state.score_amount += 1000;
+                  var audio = new Audio('sound/Sonic_Ring.mp3');
+                  audio.play();
                   pointBuffer++;
                 }
                 break;
@@ -518,11 +542,14 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
               colliderCount++;
               if (this.shared_scratchpad.game_state.lives_amount > 0) {
                 if (shape.class_name === "Sphere") {
+                  this.shared_scratchpad.game_state.count_down_timer("display_text", 1.5, "OWWW YOU HIT AN ASTEROID!!!!! AKJSDLFAJDLKF");
                   this.shared_scratchpad.game_state.lives_amount -= 1;
+                    var audio = new Audio('sound/Junk_Crash.mp3');
+                    audio.play();
                 }
                 if (this.shared_scratchpad.game_state.lives_amount == 0) {
+                  this.shared_scratchpad.game_state.flag_timers.display_text = Number.MAX_SAFE_INTEGER;
                   isDead = true;
-                  console.log("we dead");
                   break;
                 }
                 break;
@@ -539,7 +566,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         }
 
         if (isDead) {
-          this.shared_scratchpad.game_state.display_text = "GAME OVER";
+          this.shared_scratchpad.game_state.display_text = "rekt</br>press R to start agin";
           this.shared_scratchpad.animate = false;
         }
 
@@ -555,27 +582,52 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
       }
     },
     'spaceship_controls': function() {
+
+        function clamp(num, min, max) {
+          return num <= min ? min : num >= max ? max : num;
+        }
+
+        function descent(num) {
+          var zero_diff = Math.min(0.5, Math.abs(num));
+          return num < 0 ? num + zero_diff : num > 0 ? num - zero_diff : num;
+        }
+
         if (key_left){
+          left_right_rotation += 1.3;
           xforce--;
         }
         if (key_right){
+          left_right_rotation -= 1.3;
           xforce++;
         }
         if (key_down){
+          up_down_rotation -= 0.8;
           yforce--;
         }
         if (key_up){
+          up_down_rotation += 0.8;
           yforce++;
         }
+
         // handle acceleration
-        if (xforce > maxspeed)
-            xforce = maxspeed;
-        if (xforce < -maxspeed)
-            xforce = -maxspeed;
-        if (yforce > maxspeed)
-            yforce = maxspeed;
-        if (yforce < -maxspeed)
-            yforce = -maxspeed;
+        xforce = clamp(xforce, -1*maxspeed, maxspeed);
+        yforce = clamp(yforce, -1*maxspeed, maxspeed);
+
+        // bounded movement range
+        playerlocationx = clamp(playerlocationx + pixelx, -20000, 20000);
+        playerlocationy = clamp(playerlocationy + pixely, -20000, 20000);
+
+        // bounded rotation range
+        left_right_rotation = clamp(left_right_rotation, -25, 25);
+        up_down_rotation = clamp(up_down_rotation, -10, 10);
+
+        // reset ship rotation if no keys are pressed
+        if (!(key_left && key_right)) {
+          left_right_rotation = descent(left_right_rotation);
+        }
+        if (!(key_down && key_up)) {
+          up_down_rotation = descent(up_down_rotation);
+        }
 
         // abrupt stop
         if (!key_left && !key_right){
@@ -594,18 +646,6 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           pixely += yforce;
         }
 
-        // bounded movement range
-        playerlocationx = playerlocationx + pixelx;
-        if (playerlocationx >= 20000)
-          playerlocationx = 20000;
-        if (playerlocationx <= -20000)
-          playerlocationx = -20000;
-
-        playerlocationy = playerlocationy + pixely;
-        if (playerlocationy >= 20000)
-          playerlocationy = 20000;
-        if (playerlocationy <= -20000)
-          playerlocationy = -20000;
     },
     'display': function(time)
       {
@@ -616,7 +656,6 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         // shaders_in_use[ "Default" ].activate();
         shaders_in_use[ "Bump_Mapping" ].activate();
         // shaders_in_use[ "Plasma_Shader" ].activate();
-
 
         gl.enable(gl.BLEND);
         // gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
@@ -650,22 +689,21 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         // smoke_transform = mult(smoke_transform, translation, smoke_transform);
 
         var prescale = .35;  // control spaceship size
-        this.spaceship(spaceship_transform, graphics_state, prescale);  // specify position, etc with model_transform
+        var rotated_spaceship_transform = mult(spaceship_transform, rotation(left_right_rotation, [0, 0, 1]));
+        var rotated_spaceship_transform = mult(rotated_spaceship_transform, rotation(up_down_rotation, [1, 0, 0]));
+        this.spaceship(rotated_spaceship_transform, graphics_state, prescale);  // specify position, etc with model_transform
 
-        if (key_left || key_up || key_right || key_down) {
-          initSmokeParticles(t, spaceship_transform);
-        }
 
         if (!isDead) {
           this.spaceship_controls();
-          this.smoke();
+          initSmokeParticles(t, spaceship_transform);
           this.create_game_objects();
           this.shared_scratchpad.game_state.score_amount++;
-        }
-        else {
-          this.smoke();
+        }else {
           this.draw_shapes();
         }
+        this.smoke();
+
     }
   }, Animation );
 
@@ -684,8 +722,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           lives: document.getElementById("lives-text"),
           display_text: document.getElementById("main-display-text")
         });
-        this.shared_scratchpad.game_state = {score_amount: 0, lives_amount: 1, display_text: "hi world"};
-        this.shared_scratchpad.game_state.flags = {"asteroid": true, "ring": true, "display_text": false};
+        this.shared_scratchpad.game_state = {score_amount: 0, lives_amount: 3, display_text: ""};
+        this.shared_scratchpad.game_state.flags = {"asteroid": true, "ring": true, "display_text": true};
         this.shared_scratchpad.game_state.flag_timers = {"asteroid": Number.MAX_SAFE_INTEGER, "ring": Number.MAX_SAFE_INTEGER, "display_text": Number.MAX_SAFE_INTEGER};
         this.shared_scratchpad.game_state.count_down_timer = function(object, count_down_time, text_string = "") {
           var currTime = new Date();
@@ -703,16 +741,24 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           if (this.shared_scratchpad.game_state.flag_timers[flag] < currTime) {
             this.shared_scratchpad.game_state.flags[flag] ^= 1;
             this.shared_scratchpad.game_state.flag_timers[flag] = Number.MAX_SAFE_INTEGER;
+            if (flag == "display_text") {
+              this.shared_scratchpad.game_state.display_text = "";
+            }
           }
         }
       },
       'display': function (time) {
-        // var deltaTime = Math.abs(new Date() - this.shared_scratchpad.game_state.time);
-        // this.shared_scratchpad.game_state.time = new Date();
-
         this.score.innerHTML = "Score: " + this.shared_scratchpad.game_state.score_amount;
-        this.lives.innerHTML = "Lives: " + this.shared_scratchpad.game_state.lives_amount;
+        this.lives.innerHTML = "Health: " + "<div class='health-container'>" + "<div class='health-bar'></div>".repeat(this.shared_scratchpad.game_state.lives_amount) + "</div>";
         this.display_text.innerHTML = this.shared_scratchpad.game_state.display_text;
         this.update_timers();
       }
     }, Animation);
+
+Shape.prototype.normalize_positions = function()
+  { var average_position = vec3(), average_length = 0;
+    for( var i = 0; i < this.positions.length; i++ ) average_position  =  add( average_position, scale_vec( 1/this.positions.length, this.positions[i] ) );
+    for( var i = 0; i < this.positions.length; i++ ) this.positions[i] =  subtract( this.positions[i], average_position );
+    for( var i = 0; i < this.positions.length; i++ ) average_length    += 1/this.positions.length * length( this.positions[i] );
+    for( var i = 0; i < this.positions.length; i++ ) this.positions[i] =  scale_vec( 1/average_length, this.positions[i] );
+  }
