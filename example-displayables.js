@@ -881,7 +881,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           lives: document.getElementById("lives-text"),
           display_text: document.getElementById("main-display-text")
         });
-        this.shared_scratchpad.game_state = {score_amount: 0, lives_amount: 5, display_text: ""};
+        this.shared_scratchpad.game_state = {score_amount: 0, lives_amount: 3, display_text: ""};
         this.shared_scratchpad.game_state.flags = {"asteroid": true, "ring": true, "display_text": true, "collision_recover": true};
         this.shared_scratchpad.game_state.flag_timers = {"asteroid": Number.MAX_SAFE_INTEGER, "ring": Number.MAX_SAFE_INTEGER, "display_text": Number.MAX_SAFE_INTEGER, "collision_recover": Number.MAX_SAFE_INTEGER};
         this.shared_scratchpad.game_state.count_down_timer = function(object, count_down_time, text_string = "", count_down_time_ms = 0) {

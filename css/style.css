@@ -7,9 +7,9 @@ canvas {
     /*position: absolute;
     top: 0px;
     left: 0px;*/
-    padding-top: 3%;
+
     display: block;
-    margin: auto;
+    /*margin: auto;*/
     z-index: -100;
 }
 
