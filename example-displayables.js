@@ -22,7 +22,7 @@ var oscType = 0 // 0: still, 1: hor, 2: vert, 3: spiral
 
 function initSmokeParticles(bt, spaceship_transform) {
   // smokeParticle = [];
-  var numParticles = 1;
+  var numParticles = 5;
   for (var i = 0; i < numParticles; i++) {
     var sx = Math.cos(Math.random() * 2 * Math.PI);
     var sy = Math.cos(Math.random() * 2 * Math.PI);
@@ -398,8 +398,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
     'smoke' : function () {
         var time = this.shared_scratchpad.graphics_state.animation_time/1000;
         var graphics_state = this.shared_scratchpad.graphics_state;
-        // var smokeTexture = new Material(Color(0, 0, 0, 0), 1, .1, .2, 50 , "images/smoke.gif");
-        var smokeTexture = new Material ( Color(1, 1, 1, 1), .4, .8, .9, 50, "images/asteroid.jpg");
+        var smokeTexture = new Material(Color(0, 0, 0, 0), 0.2, .1, .2, 50 , "images/smoke.gif");
+        // var smokeTexture = new Material ( Color(1, 1, 1, 1), .4, .8, .9, 50, "images/asteroid.jpg");
 
         var i = 0;
         while (i < smokeParticle.length) {
@@ -412,8 +412,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
           model_transform = mult(model_transform, scale(smokeScale * 3, smokeScale * 3, smokeScale * 3) );
           // shapes_in_use.triangle.draw(graphics_state, model_transform, smokeTexture); // ver.1
-          // shapes_in_use.square.draw(graphics_state, model_transform, smokeTexture); // ver.2
-          shapes_in_use.smoke.draw(graphics_state, model_transform, smokeTexture);
+          shapes_in_use.square.draw(graphics_state, model_transform, smokeTexture); // ver.2
+          // shapes_in_use.smoke.draw(graphics_state, model_transform, smokeTexture);
 
           smokeParticle[i].startTransform = mult(smokeParticle[i].startTransform, translation(smokeParticle[i].delta[0],smokeParticle[i].delta[1],smokeParticle[i].delta[2]));
 
