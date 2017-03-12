@@ -675,7 +675,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         }
 
         if (isDead) {
-          this.shared_scratchpad.game_state.display_text = "GAME OVER</br>Press R to restart";
+          this.shared_scratchpad.game_state.display_text = "<p>GAME OVER</p></br></br><p>Press R to restart</p>";
           this.shared_scratchpad.animate = false;
         }
 
