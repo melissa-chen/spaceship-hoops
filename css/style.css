@@ -13,11 +13,6 @@ canvas {
     z-index: -100;
 }
 
-.canvas {
-  position: fixed;
-  z-index: -1;
-}
-
 .outer-canvas {
   max-width: 90vw;
   max-height: 80vh;
@@ -69,10 +64,29 @@ canvas {
     border-right: 2px solid;
 }
 
+.point-msg {
+  color: green;
+}
+
+.gain-life-msg {
+  color: green;
+}
+
+.lose-life-msg {
+  color: red;
+}
+
+
 /* ================= */
 #test {
     position: absolute;
     top: 650px;
+}
+
+.white-bg {
+  top: 50%;
+  z-index: -5;
+  background-color: white;
 }
 
 .old-tv-screen {
