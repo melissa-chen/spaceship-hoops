@@ -39,6 +39,17 @@ function initSmokeParticles(numParticles, bt, spaceship_transform, color) {
   }
 }
 
+window.onload = function() {
+    var canvas = document.getElementById('gl-canvas');
+    var context = canvas.getContext('2d');
+    var imageObj = new Image();
+
+    imageObj.onload = function() {
+      context.drawImage(imageObj, 69, 50);
+    };
+    imageObj.src = 'images/starter_bg.png';
+};
+
 function Node(data) {
     this.data = data;
     this.next = null;
@@ -506,7 +517,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           console.log(x_displacement);
           console.log(y_displacement);
           console.log("-----");
-          
+
           playerlocationx += (left_right * x_displacement * obj_speed / 120) * 100;
           playerlocationy += (up_down * y_displacement * obj_speed / 120) * 100;
 
@@ -689,7 +700,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         }
 
         if (isDead) {
-          this.shared_scratchpad.game_state.display_text = "GAME OVER</br>Press R restart";
+          this.shared_scratchpad.game_state.display_text = "GAME OVER</br>Press R to restart";
           this.shared_scratchpad.animate = false;
         }
 
@@ -732,25 +743,25 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
           if (key_left){
             left_right_rotation += 1.3;
-            pixelx = (pixelx > 0) ? 0 : pixelx; 
+            pixelx = (pixelx > 0) ? 0 : pixelx;
             xforce = (xforce > 0) ? 0 : xforce;
             xforce--;
           }
           if (key_right){
             left_right_rotation -= 1.3;
-            pixelx = (pixelx < 0) ? 0 : pixelx; 
+            pixelx = (pixelx < 0) ? 0 : pixelx;
             xforce = (xforce < 0) ? 0 : xforce;
             xforce++;
           }
           if (key_down){
             up_down_rotation -= 0.8;
-            pixely = (pixely > 0) ? 0 : pixely; 
+            pixely = (pixely > 0) ? 0 : pixely;
             yforce = (yforce > 0) ? 0 : yforce;
             yforce--;
           }
           if (key_up){
             up_down_rotation += 0.8;
-            pixely = (pixely < 0) ? 0 : pixely; 
+            pixely = (pixely < 0) ? 0 : pixely;
             yforce = (yforce < 0) ? 0 : yforce;
             yforce++;
           }
@@ -791,66 +802,67 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
         pixelx += xforce;
         pixely += yforce;
-        
+
 
     },
     'display': function(time)
       {
-        //this.shared_scratchpad.graphics_state.camera_transform = mult( rotation( 8, -1, 0, 0 ), this.shared_scratchpad.graphics_state.camera_transform );
-        var graphics_state  = this.shared_scratchpad.graphics_state,
-            model_transform = mat4();             // We have to reset model_transform every frame, so that as each begins, our basis starts as the identity.
+        if (gameInPlay == true){
+          //this.shared_scratchpad.graphics_state.camera_transform = mult( rotation( 8, -1, 0, 0 ), this.shared_scratchpad.graphics_state.camera_transform );
+          var graphics_state  = this.shared_scratchpad.graphics_state,
+              model_transform = mat4();             // We have to reset model_transform every frame, so that as each begins, our basis starts as the identity.
 
-        // shaders_in_use[ "Default" ].activate();
-        shaders_in_use[ "Bump_Mapping" ].activate();
-        // shaders_in_use[ "Plasma_Shader" ].activate();
+          // shaders_in_use[ "Default" ].activate();
+          shaders_in_use[ "Bump_Mapping" ].activate();
+          // shaders_in_use[ "Plasma_Shader" ].activate();
 
-        gl.enable(gl.BLEND);
-        // gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+          gl.enable(gl.BLEND);
+          // gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 
-        counter++;
+          counter++;
 
-        // *** Lights: *** Values of vector or point lights over time.  Arguments to construct a Light(): position or vector (homogeneous coordinates), color, size
-        // If you want more than two lights, you're going to need to increase a number in the vertex shader file (index.html).  For some reason this won't work in Firefox.
-        graphics_state.lights = [];                    // First clear the light list each frame so we can replace & update lights.
+          // *** Lights: *** Values of vector or point lights over time.  Arguments to construct a Light(): position or vector (homogeneous coordinates), color, size
+          // If you want more than two lights, you're going to need to increase a number in the vertex shader file (index.html).  For some reason this won't work in Firefox.
+          graphics_state.lights = [];                    // First clear the light list each frame so we can replace & update lights.
 
-        var t = graphics_state.animation_time/1000, light_orbit = [ Math.cos(t), Math.sin(t) ];
-        graphics_state.lights.push( new Light( vec4( 5, 5, 40, 1 ), Color( 1, 1, 1, 1 ), 20 ) );
-        // graphics_state.lights.push( new Light( vec4( -10*light_orbit[0], -20*light_orbit[1], -14*light_orbit[0], 0 ), Color( 1, 1, .3, 1 ), 100*Math.cos( t/10 ) ) );
+          var t = graphics_state.animation_time/1000, light_orbit = [ Math.cos(t), Math.sin(t) ];
+          graphics_state.lights.push( new Light( vec4( 5, 5, 40, 1 ), Color( 1, 1, 1, 1 ), 20 ) );
+          // graphics_state.lights.push( new Light( vec4( -10*light_orbit[0], -20*light_orbit[1], -14*light_orbit[0], 0 ), Color( 1, 1, .3, 1 ), 100*Math.cos( t/10 ) ) );
 
-        // *** Materials: *** Declare new ones as temps when needed; they're just cheap wrappers for some numbers.
-        // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
-        // Omit the final (string) parameter if you want no texture
-                                                      //ambient, diffuse, specular, specular exponent
+          // *** Materials: *** Declare new ones as temps when needed; they're just cheap wrappers for some numbers.
+          // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
+          // Omit the final (string) parameter if you want no texture
+                                                        //ambient, diffuse, specular, specular exponent
 
-        // FIRST: Make the background (giant cube texture mapped with sky)
-        var backgroundSky = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/starry-sky.jpg");
-        var sky_transform = mult(mat4(), scale(500, 500, 500));
-        shapes_in_use.cube.draw(graphics_state, sky_transform, backgroundSky);
+          // FIRST: Make the background (giant cube texture mapped with sky)
+          var backgroundSky = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/starry-sky.jpg");
+          var sky_transform = mult(mat4(), scale(500, 500, 500));
+          shapes_in_use.cube.draw(graphics_state, sky_transform, backgroundSky);
 
-        // ************ MAKE A SPACESHIP ********** //
-        spaceship_transform = mat4();
-        spaceship_transform = mult(spaceship_transform, translation(playerlocationx/100, playerlocationy/100, 0, 0 ));
-        var camera_transform = spaceship_transform;
-        camera_transform = mult(camera_transform, translation(1, 5, 30));
-        this.shared_scratchpad.graphics_state.camera_transform = inverse(camera_transform);
-        // smoke_transform = mult(smoke_transform, translation, smoke_transform);
+          // ************ MAKE A SPACESHIP ********** //
+          spaceship_transform = mat4();
+          spaceship_transform = mult(spaceship_transform, translation(playerlocationx/100, playerlocationy/100, 0, 0 ));
+          var camera_transform = spaceship_transform;
+          camera_transform = mult(camera_transform, translation(1, 5, 30));
+          this.shared_scratchpad.graphics_state.camera_transform = inverse(camera_transform);
+          // smoke_transform = mult(smoke_transform, translation, smoke_transform);
 
-        var prescale = .35;  // control spaceship size
-        var rotated_spaceship_transform = mult(spaceship_transform, rotation(left_right_rotation, [0, 0, 1]));
-        var rotated_spaceship_transform = mult(rotated_spaceship_transform, rotation(up_down_rotation, [1, 0, 0]));
-        this.spaceship(rotated_spaceship_transform, graphics_state, prescale);  // specify position, etc with model_transform
+          var prescale = .35;  // control spaceship size
+          var rotated_spaceship_transform = mult(spaceship_transform, rotation(left_right_rotation, [0, 0, 1]));
+          var rotated_spaceship_transform = mult(rotated_spaceship_transform, rotation(up_down_rotation, [1, 0, 0]));
+          this.spaceship(rotated_spaceship_transform, graphics_state, prescale);  // specify position, etc with model_transform
 
 
-        if (!isDead) {
-          this.spaceship_controls();
-          initSmokeParticles(2, t, spaceship_transform, "grey");
-          this.create_game_objects();
-          this.shared_scratchpad.game_state.score_amount++;
-        }else {
-          this.draw_shapes();
+          if (!isDead) {
+            this.spaceship_controls();
+            initSmokeParticles(2, t, spaceship_transform, "grey");
+            this.create_game_objects();
+            this.shared_scratchpad.game_state.score_amount++;
+          }else {
+            this.draw_shapes();
+          }
+            this.smoke();
         }
-        this.smoke();
-
     }
   }, Animation );
 
@@ -895,10 +907,16 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
         }
       },
       'display': function (time) {
-        this.score.innerHTML = "Score: " + this.shared_scratchpad.game_state.score_amount;
-        this.lives.innerHTML = "Health: " + "<div class='health-container'>" + "<div class='health-bar'></div>".repeat(this.shared_scratchpad.game_state.lives_amount) + "</div>";
-        this.display_text.innerHTML = this.shared_scratchpad.game_state.display_text;
-        this.update_timers();
+        if (gameInPlay == true) {
+          this.score.innerHTML = "Score: " + this.shared_scratchpad.game_state.score_amount;
+          this.lives.innerHTML = "Health: " + "<div class='health-container'>" + "<div class='health-bar'></div>".repeat(this.shared_scratchpad.game_state.lives_amount) + "</div>";
+          this.display_text.innerHTML = this.shared_scratchpad.game_state.display_text;
+          this.update_timers();
+        }
+        else {
+
+        }
+
       }
     }, Animation);
 
