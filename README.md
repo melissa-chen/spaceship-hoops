@@ -29,18 +29,18 @@ We will also have hearts that pop up that the player can hit to gain an extra li
 The spaceship will be movable through the left, right, up, and down arrow keys, so the user can move the spaceship from up and down or left to right to dodge asteroids or go through rings. As the spaceship moves, smoke will come out from the back.
 
 ### Advanced Topics
-1. Collision detection
+(1) Collision detection
 
 We used collision detection when we are seeing if our spaceship hit an asteroid, goes through a ring, or hits a heart.
 
-2. OBJ files
+(2) OBJ files
 
 We use OBJ files to generate the shapes for the asteroids, rings, and hearts.
 
-3. Bump mapping
+(3) Bump mapping
 
 We used bump mapping to texture the spaceship and asteroids.
 
-4. Smoke
+(4) Smoke
 
 We used smoke that comes out of the spaceship as it moves.
