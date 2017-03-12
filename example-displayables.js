@@ -283,6 +283,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
         shapes_in_use.ringobj = new Shape_From_File( "images/ring.obj" );
         shapes_in_use.heartobj = new Shape_From_File( "images/Heart.obj" );
+        shapes_in_use.asteroidobj = new Shape_From_File( "images/asteroid27.obj" );
 
         shapes_in_use.cylindrical_tube = new Cylindrical_Tube(5, 20);
         shapes_in_use.capped_cylinder = new Capped_Cylinder(5, 20);
@@ -466,6 +467,7 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
       asteroidTexture = new Material(Color(1, 1, 1, 1), .4, .8, .9, 50, "images/asteroid.jpg"),
       ring_material = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/gold.jpg")
       heart_material = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/red.jpg");
+      asteroid_material = new Material(Color(0,0,0,1), 1, 1, 1, 40, "images/asteroid.jpg");
 
       var randx = getRandomNumber(-50, 50);
       var randy = getRandomNumber(-20, 20);
@@ -487,6 +489,8 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
 
         randx = getRandomNumber(-50, 50);
         randy = getRandomNumber(-20, 20);
+        var asteroid_transform = mult(mat4(), scale(10,10,10));
+        add_object(shapes_in_use.asteroidobj, asteroid_material, vec3(randx, randy, -100), asteroidSpeed, asteroid_transform);
         add_object(shapes_in_use.asteroid, asteroidTexture, vec3(randx, randy, -100), asteroidSpeed);
       }
       if (asteroidRate > 20 && counter == 1000) {
