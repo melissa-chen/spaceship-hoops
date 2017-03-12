@@ -9,13 +9,19 @@ git tag
 ## Members
 | Name          | UID           |
 | ------------- |:-------------:|
-| Melissa Chen  |               |
-| Howard Huang  |               |   
+| Melissa Chen  |   504402958   |
+| Howard Huang  |   704429216   |   
 | Peter Kim     |   204271299   |  
 | Paulina Lei   |   004403130   |
-| Brandon Pon   |               |
+| Brandon Pon   |   504403364   |
 
 ## Game
+
+## Instructions
+
+Use the up, down, left, and right arrow keys to move the spaceship.
+
+Move the spaceship to go through rings for more points and hearts to get more lives while dodging asteroids.
 
 ### Idea
 Our game has a spaceship fly through space to go through rings while dodging asteroids.
@@ -47,4 +53,4 @@ We used smoke that comes out of the spaceship as it moves.
 
 (5) Physics
 
-We used physics for the controls of the ship to make it seem more realistic.
+We used physics for the controls of the ship and when the ship hits the asteroid. The direction in which the ship rebounds from an asteroid is relative to the position and speed of the asteroid.
