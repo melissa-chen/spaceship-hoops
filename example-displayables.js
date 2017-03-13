@@ -9,7 +9,7 @@ var counter = 1;
 var head, tail;
 var heartCounter = 0;
 
-var ringRate = 220, asteroidRate = 50, heartRate = 1500;
+var ringRate = 220, asteroidRate = 50, heartRate = 430;
 var ringSpeed = 50.0, asteroidSpeed = 43.0;
 
 var rocketSphere;
@@ -457,19 +457,15 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           var asteroid_transform = mult(mat4(), scale(asteroidSize, asteroidSize, asteroidSize));
            add_object(shapes_in_use.asteroidobj, asteroid_material, vec3(randx, randy, -100), asteroidSpeed, asteroid_transform);
           //add_object(shapes_in_use.asteroid, asteroidTexture, vec3(randx, randy, -100), asteroidSpeed);
-        }
-
-        heartCounter++;
-        if (heartCounter == heartRate) {
+        } else if (counter % heartRate == 0 ) {
           var shouldSpawn = getRandomNumber(0, 100);
-          if(shouldSpawn <= 35){
+          if(shouldSpawn <= 85){
             randx = getRandomNumber(spaceship_transform[0][3]-50, spaceship_transform[0][3]+50);
             getRandomNumber(spaceship_transform[1][3]-20, spaceship_transform[1][3]+20);
             var heart_transform = mult( model_transform, rotation( 90, 0, 1, 0 ) );
             heart_transform = mult(heart_transform, scale(2, 2, 2));
             add_object(shapes_in_use.heartobj, heart_material, vec3(randx, randy, -100), ringSpeed, heart_transform);
           }
-          heartCounter = 0;
         }
 
         if (asteroidRate >= 20 && counter == 1000) {
@@ -543,12 +539,12 @@ Declare_Any_Class( "Example_Animation",  // An example of a displayable object t
           }
           else if (image == "images/Heart.obj") {
             if (this.shared_scratchpad.game_state.lives_amount < 3) {
-              this.shared_scratchpad.game_state.count_down_timer("display_text", 1, "<p>You got a heart!<p><p class='gain-life-msg'>Lives +1</p>", 500);
+              this.shared_scratchpad.game_state.count_down_timer("display_text", 1, "<p>You got a heart!<p><p class='gain-life-msg'>Health +1</p>", 500);
               this.shared_scratchpad.game_state.lives_amount += 1;
               var heartAudio = new Audio('sound/Mario_Extra_Life.mp3');
               heartAudio.play();
             } else if (this.shared_scratchpad.game_state.lives_amount >= 3) {
-              this.shared_scratchpad.game_state.count_down_timer("display_text", 1, "<p>Max lives reached</p>", 500);
+              this.shared_scratchpad.game_state.count_down_timer("display_text", 1, "<p>Max health</p>", 500);
             }
             return true;
           }
